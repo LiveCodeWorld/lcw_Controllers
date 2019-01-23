@@ -1,0 +1,43 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The twitter.lc controller can be found at: twitter.lc
+   Here is some test help
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "index,twitter" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "twitter.lc" below.
+   --
+   */
+
+   command twitter
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+   end twitter
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      put twitter_FetchPageJson (droppedURL) into pageJSON
+      fedwiki_ReturnJSON pageJSON
+   end index
+
+?>

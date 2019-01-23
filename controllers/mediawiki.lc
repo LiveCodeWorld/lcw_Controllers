@@ -1,0 +1,288 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The mediawiki.lc controller can be found at: mediawiki.lc
+   Here is some test help
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "section,search,index,wikipage,importSection,transportAgain,mediawiki" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "mediawiki.lc" below.
+   --
+   */
+
+   command mediawiki
+      start using stack (gAPPPATH & "stacks/lib_MediaWiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_WikiSandbox.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedWikiPedia.livecode")
+      start using stack (gAPPPATH & "stacks/lib_WikiCommons.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_WikiRestBase.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_WikipediaSections.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Wikipedia.livecodescript")
+   end mediawiki
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      fedwiki_SetDroppedInfo $_POST_RAW, droppedURL, droppedHTML, droppedText
+      put the result into dropArray
+      
+      switch
+         -- {"text":"Ancient Greek language","html":"Fedwiki form","title":""}
+         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/File:(.+)", wikiLanguage, shortImageFile)  -- https://en.wikipedia.org/wiki/File:Lacan2.jpg -- but does not fetch an image?
+         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)#/media/File:(.+)", wikiLanguage, wikiSlug, shortImageFile)  -- https://en.wikipedia.org/wiki/Ethical_regulator#/media/File:Ethical_Regulator_System.gif
+            put wikicommons_FetchImagePageJson (shortImageFile) into pageJSON
+            fedwiki_ReturnJSON pageJSON
+            break
+         case (droppedURL is empty and droppedHTML is empty)
+            -- a fedwiki wikipedia form
+            put _ConstructWikipediaSlug (droppedText) into foundPageTitle
+            put wikicommons_ConstructPageArray (foundPageTitle, true) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
+            -- section droppedURL
+            put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
+            thumbNail droppedHtml
+            break
+         case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
+         case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
+         case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
+         case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+         case matchText (droppedText, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
+         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
+            wikipage droppedURL
+            break
+         case droppedText is empty
+            -- a Fedwiki flag, or Twins, or a Neighbour
+            put "This is Fedwiki flag, or Twins, or a Neighbour." into someText
+            put CR & CR & droppedHtml after someText
+            put fedwiki_ConstructErrorJSON (someText) into errorJSON
+            fedwiki_ReturnJSON errorJSON
+            break
+         default
+            put fedwiki_ForwardJSON ("https://rest.livecode.world/echo") into pageJSON
+      end switch
+   end index
+   
+   on wikipage
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      --
+      switch
+         case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
+            -- http://wiki.p2pfoundation.net/api.php?action=query&format=json&prop=images&titles=Cooperatives
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break  
+         case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
+            put xkcd_FetchPageArray (droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
+            -- https://rationalwiki.org/wiki/Lead-crime_hypothesis
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://rationalwiki.org/w/api.php?", droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://en.bitcoin.it/w/api.php?", droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
+            put wikicommons_ConstructPageArray (wikiSlug, true) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         default
+            put fedwiki_ConstructErrorJSON ("Not a Wikipedia page!" && droppedURL) into pageJSON
+            fedwiki_ReturnJSON pageJSON
+      end switch
+   end wikipage
+   
+   on importSection
+      -- section droppedURL or a section form
+      
+      fedwiki_SetDroppedInfo $_POST_RAW, droppedURL, droppedHTML, droppedText
+      put the result into dropArray
+      put dropArray ["section_title"] into newPageTitle
+      
+      put "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$" into someReg
+      if matchText (droppedURL, someReg, someLang, pageSlug, sectionNum) is true then
+         -- put fedwikipedia_FetchSectionSummaryPageArray (pageSlug, sectionNum) into fedwikiPageArray
+         put wikicommons_ConstructSectionPageArray (pageSlug, sectionNum, droppedURL) into fedwikiPageArray
+         if newPageTitle is not empty then
+            put newPageTitle into fedwikiPageArray ["title"]
+         end if
+         fedwiki_ReturnPageArray fedwikiPageArray
+      else
+         put fedwiki_ConstructErrorJSON ("Not a Wikipedia edit link!" && droppedURL) into pageJSON
+         fedwiki_ReturnJSON pageJSON
+      end if
+   end importSection
+   
+   on search
+      /*
+      Following a favicon drop from a fedwiki page onto the imagine transport
+      The value of the wikislug is posted to "https://rest.fedwiki.org/imagine/search"
+      
+      Dropped favicons do not contain all the information needed in the wiki page title - just the fedwiki-slug
+      So we need to hack and search for a good match. There will be some wrong matches returned.
+      
+      We could search for existing pages - and get the realt title from there if such a page exists.
+      but we often use ghost pages that are not yet saved on the server:
+      -- put fedwiki_FindTitleFromSlug (siteMapArray) into pageTitle
+      */
+      
+      put fedwiki_ProcessPost() into fedwikiSlug   
+      put _ConstructWikipediaSlug (fedwikiSlug) into foundWikipediaPageTitle
+      put wikicommons_ConstructPageArray (foundWikipediaPageTitle, true) into fedwikiPageArray
+      
+      /*
+      -- Debug info
+      fedwiki_AddMarkdownToPageArray fedwikiPageArray, "# Debug info"
+      put "Searching for Wikipidia page" && kwote (fedwikiSlug) & ", using handler 'search' of mediawiki.lc" into errorText
+      put CR & CR & "Found page title:" && foundWikipediaPageTitle after errorText
+      put CR & CR & "Fedwiki-slug:" && fedwikiSlug after errorText
+      fedwiki_AddParagraphToPageArray fedwikiPageArray, errorText
+      */
+      --
+      fedwiki_ReturnPageArray fedwikiPageArray
+   end search
+   
+   private function _ConstructWikipediaSlug fedwikiSlug
+      /*
+      Ideally we should have markup in the flag html so that the drag-drop can use the full wiki page title
+      and not just the slug which misses all sorts of case-sensitive formatting
+      */
+      
+      put word 1 to -1 of fedwikiSlug into fedwikiSlug
+      replace "-" with space in fedwikiSlug
+      put toUpper (char 1 of fedwikiSlug) into char 1 of fedwikiSlug
+      --
+      put wikipedia_FindPage (fedwikiSlug) into foundWikipediaPageTitle -- probably a bit slow
+      --
+      return foundWikipediaPageTitle  
+   end _ConstructWikipediaSlug
+   
+   on section
+      -- imports multiple subsections
+      put fedwiki_GetDroppedUrl() into droppedURL
+      switch
+         case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
+            -- uses restbase api's
+            put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         default
+            put fedwiki_ConstructErrorJSON ("Not a Wikipedia edit link!" && droppedURL) into pageJSON
+            fedwiki_ReturnJSON pageJSON
+      end switch
+   end section
+   
+   command thumbNail droppedHTML
+      -- <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"><img alt="" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Bruce_Sterling_at_ARE_2010.jpg/220px-Bruce_Sterling_at_ARE_2010.jpg" width="220" height="147" class="thumbimage" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Bruce_Sterling_at_ARE_2010.jpg/330px-Bruce_Sterling_at_ARE_2010.jpg 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Bruce_Sterling_at_ARE_2010.jpg/440px-Bruce_Sterling_at_ARE_2010.jpg 2x" data-file-width="3888" data-file-height="2592">
+      -- put script_GetCommentAboveMe() into droppedHTML
+      --
+      put fedwikipedia_ExtractShortImageFile (droppedHTML) into shortImageFile
+      put wikicommons_FetchBasicTwoImagePageArray (shortImageFile) into pageArray
+      put json_FromArray (pageArray) into pageJSON
+      --
+      fedwiki_ReturnJSON pageJSON
+   end thumbNail
+   
+   on transportAgain
+      /*
+      {"title":"Joseph Stalin","create":{"type":"create","item":{"story":"","title":"Assassination"},"date":1459264331300,"source":{"url":"https://en.wikipedia.org/wiki/Leon_trotsky#Assassination","repo":"https://github.com/LiveCodeWorld/lib_MediaWiki","transport":"https://livecode.world/mediawiki/transportAgain","rev":712216007,"date":1459264331300,"link_dictionary":{"wiki_links":{"Legacy":{"section_number":31,"section_level":3,"dot_number":1}},"default":{"transport":"https://livecode.world/mediawiki/importSection"}}}}}
+      */
+      -- put script_GetCommentAboveMe() into someJSON
+      put $_POST_RAW into someJSON
+      
+      /*
+      -- put json_Lint (someJSON) into someJSON
+      put fedwiki_ConstructErrorJSON ("Testing Wikipedia transportAgain link!") into errorJSON
+      -- put fedwiki_ConstructErrorJSON (someJSON, "JSON") into errorJSON
+      fedwiki_ReturnJSON errorJSON
+      return false
+      */
+      
+      put json_ToArray (someJSON) into createArray
+      put createArray ["title"] into sectionTitle
+      put createArray ["create"]["source"] into sourceArray
+      if sourceArray is not an array then
+         put fedwiki_ConstructErrorJSON ("This is not create JSON", "Error") into errorJSON
+         fedwiki_ReturnJSON errorJSON
+         return false
+      end if
+      
+      put sourceArray ["transport"] into againTransportURL
+      put sourceArray ["url"] into wikipediaURL
+      
+      put createArray ["create"]["item"]["title"] into parentTitle
+      -- if we are 2 or more generations down this is not the pageTitle
+      put sourceArray ["pageSlug"] into pageSlug
+      put sourceArray ["pageTitle"] into pageTitle
+      
+      put sourceArray ["link_Dictionary"] into linkDictionary
+      put linkDictionary ["wiki_links"][sectionTitle]["section_number"] into sectionNum
+      if sectionNum is not a number then
+         /*
+         put "Can't find section number for" && sectionTitle & CR & CR & sectionNum into errorJSON
+         put fedwiki_ConstructErrorJSON (errorJSON, "Not a defined section link") into errorJSON
+         fedwiki_ReturnJSON errorJSON
+         return false
+         */
+         
+         put fedwiki_FetchWikipediaSummaryPageJson (sectionTitle) into pageJSON
+         fedwiki_ReturnJSON pageJSON
+         return false
+      end if
+      
+      put linkDictionary ["default"]["transport"] into linkDefaultTransport
+      put linkDictionary ["wiki_links"][sectionTitle]["transport"] into linkSpecificTransport
+      
+      switch linkDefaultTransport
+         case "https://rest.livecode.world/mediawiki/importSection"
+            /*
+            put linkDictionary ["wiki_links"][sectionTitle] into errorArray
+            put json_FromArray (errorArray) into dictJSON
+            put "Found section number" && sectionNum && "for page" && kwote (pageSlug) & CR & CR & dictJSON into errorJSON
+            
+            put fedwiki_ConstructErrorJSON (errorJSON, "A defined section link") into errorJSON
+            fedwiki_ReturnJSON errorJSON
+            return false
+            */
+            
+            put fedwikipedia_FetchSectionSummaryPageJson (pageSlug, sectionNum) into pageJSON
+            fedwiki_ReturnJSON pageJSON
+            return true
+         default
+            put linkDictionary ["wiki_links"][sectionTitle] into errorArray
+            put json_FromArray (errorArray) into dictJSON
+            put "Not a defined section link for" && pageSlug && sectionNum & CR & CR & dictJSON into errorJSON
+            put fedwiki_ConstructErrorJSON (errorJSON, "Not a defined section link") into errorJSON
+            
+            fedwiki_ReturnJSON errorJSON
+            return false
+      end switch
+   end transportAgain
+
+?>

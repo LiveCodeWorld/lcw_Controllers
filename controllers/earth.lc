@@ -1,0 +1,44 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The earth.lc controller can be found at: earth.lc
+   Here is some test help
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "index,earth" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "earth.lc" below.
+   --
+   */
+
+   command earth
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+   end earth
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put atopia_FetchStoredDomains ("platform.earth") into refTable
+      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end index
+
+?>

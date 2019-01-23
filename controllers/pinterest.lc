@@ -1,0 +1,59 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The pinterest.lc controller can be found at: pinterest.lc
+   Here is some test help
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "index,pinterest" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "pinterest.lc" below.
+   --
+   */
+
+   command pinterest
+      start using stack (gAPPPATH & "stacks/lib_Pinterest.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+   end pinterest
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      local pageArray
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      
+      switch
+         case matchText (droppedURL, "https://www.pinterest.com/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
+         case matchText (droppedURL, "https://www.pinterest.co.uk/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
+            -- https://www.pinterest.com/pin/134545107601633296/
+            _Pinterest photoID
+            break
+         default
+            webpage droppedURL
+            break
+      end switch
+   end index
+   
+   private command _Pinterest photoID
+      put pinterest_FetchPinPageJson (photoID) into pageJSON
+      fedwiki_ReturnJSON pageJSON
+   end _Pinterest
+
+?>

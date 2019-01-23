@@ -1,0 +1,72 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The asana.lc controller can be found at: asana.lc
+   Here is some test help
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "index,asana" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "asana.lc" below.
+   --
+   */
+
+   command asana
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Asana.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Secret.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_REST.livecodescript")
+   end asana
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      
+      -- https://app.asana.com/0/844764154321997/914611904511854
+      if matchText (droppedURL, "https://app.asana.com/0/(.+)/(.+)", projectID, taskID) is false then
+         put fedwiki_IsFaviconDrop() into isFavicon
+         if isFavicon is true then
+            asana_CreateTaskFromWiki droppedURL
+            put the result into fedwikiPageArray
+            --
+            fedwiki_ReturnPageArray fedwikiPageArray
+            exit to top
+         else
+            fedwiki_ExitAndReturnError droppedURL, "Not an Asana task"
+         end if
+      end if
+      
+      switch
+         case taskID = "board"
+         case taskID = "list"
+            put asana_FetchProjectPageArray (projectID) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         case taskID is a number
+            put asana_FetchTaskPageArray (taskID) into fedwikiPageArray
+            fedwiki_ReturnPageArray fedwikiPageArray
+            break
+         default
+            fedwiki_ExitAndReturnError droppedURL, "Not an Asana project task"
+      end switch
+   end index
+
+?>

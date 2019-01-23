@@ -1,0 +1,440 @@
+<?rev
+
+# PUT YOUR HANDLER NAMES  INTO THE GLOBAL gControllerHandlers AS A COMMA SEPARATED LIST
+put "index" into gControllerHandlers
+
+-- rigLoaderLoadLibrary "easyjson"
+
+function audioboom_ConstructUserParagraph locationDescription, userArray, clipMilliseconds, booURL
+   -- Mouans Sartoux
+   put item 1 of locationDescription into funkyPlace
+   put userArray ["userName"] into funkyUser
+   put "This recording was made near [[" && funkyPlace & "]],  by [[" & funkyUser & "]]" into wikiText
+
+   -- Jun 23, 2015 at 2:19 PM
+   -- https://audioboom.com/boos/3275407-wiki-game audioboom.com
+   -- https://audioboom.com/posts/5060156-learning-to-code
+   set the itemdelimiter to "/"
+   put item 3 of booURL into booDomain
+   set the itemdelimiter to "."
+   -- put item -2 to -1 of booDomain into booUrlName
+   put booURL && "audioboom" into funkUrl
+   set the itemdelimiter to comma
+
+   put clipMilliseconds into clipDate
+   convert clipDate to abbreviated date
+   put clipMilliseconds into clipTime
+   convert clipTime to time
+
+   put item 2 to 3 of clipDate && "at" && clipTime into funkyDate
+   put  ", on" &&  funkyDate && "- [" & funkUrl & "]" after wikiText
+   return wikiText
+end audioboom_ConstructUserParagraph
+
+function audioboom_FetchClipJSON audioClipID
+   -- GET /audio_clips/*audio_clip_id* returns the details of the audio clip specified by audio_clip_id.
+   if audioClipID is not a number then return "Error, param audioClipID is not a number"
+
+   put "audio_clips/" & audioClipID into apiPath
+   put ".mp3" after apiPath -- this fixes no "high_mp3" url being returned bug
+   put audioboom_RestGET (apiPath) into someJson
+   return someJson
+end audioboom_FetchClipJSON
+
+function audioboom_GuessClipJSON someURL
+   put audioboom_IDExtractFromURL (someURL) into audioClipID
+   if audioClipID is empty then return empty
+   put audioboom_FetchClipJSON (audioClipID) into someJSON
+   try
+      put json_ToArray (someJSON) into responseArray
+      put responseArray ["body"]["audio_clip"] into audioClipArray
+      put fedwiki_ConstructAudioBoomPageArray (audioClipArray) into pageArray
+      -- put "Hello" into responseArray ["world"]
+      put json_FromArray (pageArray) into pageJSON
+   catch e
+      return "error"
+   end try
+   return pageJSON
+end audioboom_GuessClipJSON
+
+function audioboom_IDExtractFromURL someUrl
+   -- was "audioboom_ParseUrl"
+   -- https://audioboom.com/boos/3256201-antibodies-part-1-crispr
+   -- https://audioboom.com/posts/5060156-learning-to-code
+
+   url_Deconstruct someUrl, someProtocol, urlDomain, urlPath, shortName, fileExtension, uName, pWord
+   -- if urlDomain = audioboom.com and someProtocol = "https" and item 1 of urlPath = "boos" then
+   if urlDomain = audioboom.com and someProtocol = "https" and item 1 of urlPath = "posts" then
+      set the itemdelimiter to "-"
+      put item 1 of shortName into someID
+      return someID
+   else
+      return empty
+   end if
+end audioboom_IDExtractFromURL
+
+function audioboom_RestGET apiPath, pAudioboomApiStem
+   if pAudioboomApiStem is empty then put "http://api.audioboom.com/" into pAudioboomApiStem
+   put pAudioboomApiStem & apiPath into someUrl
+   put url someUrl into someJson
+   return someJson
+end audioboom_RestGET
+
+command fedwiki_AddAudioToPageArray @pageArray, audioUrl, someText, pID
+   put fedwiki_ConstructStoryAudioArray (audioUrl, someText, pID) into itemArray
+   fedwiki_PageArrayAddToEnd itemArray, pageArray
+end fedwiki_AddAudioToPageArray
+
+command fedwiki_AddHtmlToPageArray @pageArray, someHtml, pID
+   put fedwiki_ConstructStoryHtmlArray (someHtml, pID) into itemArray
+   fedwiki_PageArrayAddToEnd itemArray, pageArray
+end fedwiki_AddHtmlToPageArray
+
+command fedwiki_AddMapToPageArray @pageArray, mapLat, mapLong, mapText, mapZoom, pID
+   put fedwiki_ConstructStoryMapArray (mapLat, mapLong, mapText, mapZoom, pID) into itemArray
+   fedwiki_PageArrayAddToEnd itemArray, pageArray
+end fedwiki_AddMapToPageArray
+
+command fedwiki_AddParagraphToPageArray @pageArray, someText, pID
+   put fedwiki_ConstructStoryParagraphArray (someText, pID) into itemArray
+   fedwiki_PageArrayAddToEnd itemArray, pageArray
+end fedwiki_AddParagraphToPageArray
+
+command fedwiki_AddToEndOfIndexArray dataOrArray, @someArray
+   put item 2 of the extents of someArray into indexNum
+   put someArray [indexNum]["id"] into afterID
+   add 1 to indexNum
+   put dataOrArray into someArray [indexNum]
+   return afterID -- figure out what we just added it after
+end fedwiki_AddToEndOfIndexArray
+
+command fedwiki_AddToJournalArray @journalArray, itemArray, journalType, pAfterID, pMilliseconds
+   if pMilliseconds is empty then put the milliseconds into pMilliseconds
+   if pAfterID is not empty then
+      put pAfterID into journalEntryArray ["after"]
+   end if
+   put pMilliseconds into journalEntryArray ["date"]
+   put itemArray ["id"] into journalEntryArray ["id"]
+   put itemArray into journalEntryArray ["item"]
+   put journalType into journalEntryArray ["type"]
+
+   fedwiki_AddToEndOfIndexArray journalEntryArray, journalArray
+end fedwiki_AddToJournalArray
+
+function fedwiki_ConstructAudioBoomPageArray audioClipArray
+   put audioClipArray ["title"] into clipTitle
+   put audioClipArray ["description"] into clipDescription
+   put audioClipArray ["location"] into locationArray
+   put audioClipArray ["recorded_at_ts"] into clipDate
+   put audioClipArray ["tags"] into clipTags
+
+   put audioClipArray ["urls"]["detail"] into booURL
+   put audioClipArray ["urls"]["high_mp3"] into audioURL
+   put audioClipArray ["urls"]["image"] into imageURL
+   put audioClipArray ["urls"]["wave_img"] into waveyImageURL
+
+   put audioClipArray ["user"] into userArray
+   put userArray ["username"] into booName
+   put userArray ["urls"]["image"] into userImageUrl
+   put userArray ["urls"]["profile"] into profileUrl
+
+   put fedwiki_ConstructNewPageArray (clipTitle) into pageArray
+   fedwiki_AddParagraphToPageArray pageArray, clipDescription
+   put fedwiki_ConstructImageDiv (imageURL) into imageHTML
+   fedwiki_AddHtmlToPageArray pageArray, imageHTML
+   fedwiki_AddAudioToPageArray pageArray, audioURL, "."
+
+   put locationArray ["description"] into locationDescription
+   put locationArray ["accuracy"] into locationAccuracy
+   put locationArray ["latitude"] into mapLat
+   put locationArray ["longitude"] into mapLong
+   put 17 into mapZoom
+   put fedwiki_ConstructOpenStreetMapDescription (locationDescription, mapZoom, mapLat, mapLong) into mapText
+
+   fedwiki_AddMapToPageArray pageArray, mapLat, mapLong, mapText, mapZoom, pID
+
+   put audioboom_ConstructUserParagraph (locationDescription, userArray, clipDate, booURL) into wikiText
+   fedwiki_AddParagraphToPageArray pageArray, wikiText
+   return pageArray
+end fedwiki_ConstructAudioBoomPageArray
+
+function fedwiki_ConstructFactoryArray pID
+   if pID is empty then
+      put sha1_Hash (the ticks & "factory") into pID
+   end if
+   put "factory" into factoryArray ["type"]
+   put pID into factoryArray ["id"]
+   return factoryArray
+end fedwiki_ConstructFactoryArray
+
+function fedwiki_ConstructImageDiv imageURL, imageHREF
+   -- put "https://d15mj6e6qmt1na.cloudfront.net/i/11628957" into imageURL
+   if imageHREF is empty then
+      put "<div align=center><img src=" & kwote (imageURL) & " width=428></div>" into imageHTML
+   else
+      put "<div align=center><a href="  & kwote (imageHREF) & "target=" & kwote("_blank") & "><img src=" & kwote (imageURL) & " width=428></a></div>" into imageHTML
+   end if
+   return imageHTML
+end fedwiki_ConstructImageDiv
+
+function fedwiki_ConstructJournalArray pageTitle
+   put the milliseconds into journalArray [1]["date"]
+   put empty into journalArray [1]["item"]["story"]
+   put pageTitle into journalArray [1]["item"]["title"]
+   put "create" into journalArray [1]["type"]
+   return journalArray
+end fedwiki_ConstructJournalArray
+
+function fedwiki_ConstructNewPageArray pageTitle, pSomeText
+   put pageTitle into pageArray ["title"]
+   if pSomeText is not empty then fedwiki_AddParagraphToPageArray pageArray, pSomeText
+   put fedwiki_ConstructJournalArray (pageTitle) into pageArray ["journal"]
+   return pageArray
+end fedwiki_ConstructNewPageArray
+
+function fedwiki_ConstructOpenStreetMapDescription locationDescription, mapZoom, mapLat, mapLong
+   -- put "[[Mouans-Sartoux]], PACA, France - [http://www.openstreetmap.org/node/344280980#map=19/43.61935/6.97254 openstreetmap]" into mapText
+   put "http://www.openstreetmap.org/#map=" & mapZoom & "/" & mapLat & "/" & mapLong into openstreetmapURL
+   put "[[" & item 1 of locationDescription & "]]" into item 1 of locationDescription
+   put locationDescription && "- [" & openstreetmapURL && "openstreetmap]" into mapDescription
+   return mapDescription
+end fedwiki_ConstructOpenStreetMapDescription
+
+function fedwiki_ConstructStoryAudioArray audioUrl, someText, pID
+   if pID is empty then
+      put sha1_Hash (the ticks & someText) into pID
+   end if
+   put audioUrl & CR & someText into itemArray ["text"]
+   put "audio" into itemArray ["type"]
+   put pID into itemArray ["id"]
+   return itemArray
+end fedwiki_ConstructStoryAudioArray
+
+function fedwiki_ConstructStoryHtmlArray someHtml, pID
+   if pID is empty then
+      put sha1_Hash (the ticks & someText) into pID
+   end if
+   put someHtml into itemArray ["text"]
+   put "html" into itemArray ["type"]
+   put pID into itemArray ["id"]
+   return itemArray
+end fedwiki_ConstructStoryHtmlArray
+
+function fedwiki_ConstructStoryMapArray mapLat, mapLong, mapText, mapZoom, pID
+   if pID is empty then
+      put sha1_Hash (the ticks & someText) into pID
+   end if
+   put pID into itemArray ["id"]
+   if mapLat is not empty then
+      put mapLat into itemArray ["latlng"]["lat"]
+      put mapLong into itemArray ["latlng"]["lng"]
+   end if
+   if mapText is empty then put "Map" into mapText
+   put mapText into itemArray ["text"]
+   put "map" into itemArray ["type"]
+   put mapZoom into itemArray ["zoom"]
+   return itemArray
+end fedwiki_ConstructStoryMapArray
+
+function fedwiki_ConstructStoryParagraphArray someText, pID
+   if pID is empty then
+      put sha1_Hash (the ticks & someText) into pID
+   end if
+   put someText into paragraphArray ["text"]
+   put "paragraph" into paragraphArray ["type"]
+   put pID into paragraphArray ["id"]
+   return paragraphArray
+end fedwiki_ConstructStoryParagraphArray
+
+command fedwiki_PageArrayAddToEnd storyItemArray, @pageArray
+   -- this add a factory to the journal and a itemArray to the journal and story
+   -- all with the same id
+   put pageArray ["story"] into storyArray
+   put pageArray ["journal"] into journalArray
+   put storyItemArray ["id"] into itemID
+
+   -- add the item to the end of the story
+   fedwiki_AddToEndOfIndexArray storyItemArray, storyArray
+   -- figure out what we just added it after
+   -- this can be empty if it is the first entry
+   put the result into afterID
+   put storyArray into pageArray ["story"]
+
+   -- 3) Now let's add the edit or add to the journal
+   -- make the factory have the same id as the item we will add to the story
+   put fedwiki_ConstructFactoryArray (itemID) into factoryArray
+   -- now add a journal entry for adding after the id of the end paragraph
+   fedwiki_AddToJournalArray journalArray, factoryArray, "add", afterID
+
+   -- finally add the journal entry for editing the factory
+   fedwiki_AddToJournalArray journalArray, storyItemArray, "edit"
+   put journalArray into pageArray ["journal"]
+end fedwiki_PageArrayAddToEnd
+
+command file_Deconstruct someFile, @someRoot, @shortName, @fileExtension
+    -- was "deconstruct_File"
+    -- should turn someRoot into someFolder and add "/" to end
+
+    if someFile is empty then
+        put the effective filename of this stack into someFile
+    end if
+    put someFile into someRoot
+    put the itemdelimiter into originalDelim
+
+    set the itemdelimiter to "/"
+    put last item of someFile into shortName
+    delete last item of someRoot
+
+    if shortName contains "." then
+        set the itemdelimiter to "."
+        put last item of shortName into fileExtension
+        delete last item of shortName
+    else
+        put empty into fileExtension
+    end if
+    set the itemdelimiter to originalDelim
+end file_Deconstruct
+
+function kwote someText, pQuoteChar
+   if pQuoteChar is empty then put quote into pQuoteChar
+   return pQuoteChar & someText & pQuoteChar
+end kwote
+
+function sha1_Hash someData
+   local hexDigest
+   put sha1digest (someData) into someBinaryData
+   get binarydecode ("H*", someBinaryData, hexDigest)
+   return hexDigest
+end sha1_Hash
+
+command url_Deconstruct someUrl, @someProtocol, @urlDomain, @urlPath, @shortName, @fileExtension, @uName, @pWord
+   /*
+   -- from http://regexlib.com/REDetails.aspx?regexp_id=628
+   -- put "(?:(?<protocol>http(?:s?)|ftp)(?:\:\/\/)) (?:(?<usrpwd>\w+\:\w+)(?:\@))? (?<domain>[^/\r\n\:]+)? (?<port>\:\d+)? (?<path>(?:\/.*)*\/)? (?<filename>.*?\.(?<ext>\w{2,4}))? (?<qrystr>\??(?:\w+\=[^\#]+)(?:\&?\w+\=\w+)*)* (?<bkmrk>\#.*)?" into someReg
+   */
+
+   set the itemdelimiter to ":"
+   put item 1 of someUrl into someProtocol
+   if someProtocol is among the items of "file:binFile:ftp:http:https" then
+      put someUrl into someFile
+      delete item 1 of someFile
+      if char 1 to 2 of someFile = "//" then delete char 1 to 2 of someFile
+
+      -- just in case it has a ? param at the end
+      -- strip it for now
+      set the itemdelimiter to "?"
+      put item 1 of someFile into someFile
+      set the itemdelimiter to ":"
+
+      get offset("@", someFile)
+      if it = 0 then
+         put empty into uName
+         put empty into pWord
+      else
+         put char 1 to (it - 1) of someFile into authBit
+         repeat while char 1 of authBit is "/"
+            delete char 1 of authBit
+         end repeat
+         if the number of items of authBit = 2 then
+            put item 1 of authBit into uName
+            put item 2 of authBit into pWord
+            delete char 1 to it of someFile
+         else
+            -- "@" must be in url ignore
+            put empty into uName
+            put empty into pWord
+         end if
+      end if
+      file_Deconstruct someFile, someRoot, shortName, fileExtension
+
+      set the itemdelimiter to "/"
+      put item 1 of someRoot into UrlDomain
+      put item 2 to -1 of someRoot into urlPath
+      return true
+   else
+      put empty into someProtocol
+      put empty into UrlDomain
+      put empty into urlPath
+      put empty into shortName
+      put empty into fileExtension
+      put empty into uName
+      put empty into pWord
+      return false
+   end if
+end url_Deconstruct
+
+function json_FromArray pArray, pForceRootType, pPretty
+   -- identical to (simply renamed) "ArrayToJSON"
+   -- pArray - array to be encoded
+   -- pForceRootType - can force the root to be an object if it looks like an array
+   -- pPretty - include whitespace
+   repeat for each key tKey in pArray
+      if pArray[tKey] is an array then
+         put "}"&json_FromArray(pArray[tKey]) into pArray[tKey]
+      end if
+   end repeat
+   return(mergJSONEncode("pArray",pForceRootType,pPretty))
+end json_FromArray
+
+function json_ToArray pJSON
+   if pJSON is empty then return false
+   try -- as otherwise an error with non-json causes script to exit
+      local tArray,tKeys
+      if pJSON is empty then return empty
+      repeat for each line tKey in mergJSONDecode(pJSON,"tArray")
+         put json_ToArray(tArray[tKey]) into tArray[tKey]
+      end repeat
+      return tArray
+   catch e
+      return empty
+   end try
+end json_ToArray
+
+function fedwiki_ConstructErrorJSON errorText
+   put fedwiki_ConstructNewPageArray ("Error", errorText) into someArray
+   put json_FromArray (someArray) into someJSON
+   return someJSON
+end fedwiki_ConstructErrorJSON
+
+
+# THIS COMMAND WILL BE CALLED IF NONE IS SPECIFYED IN THE URI
+command index
+   -- put "https://audioboom.com/boos/3844212-fedwiki-authoring-tool" into droppedURL
+   -- put "https://audioboom.com/boos/3836093-raspberrypad" into droppedURL
+	put $_POST_RAW into dropJSON
+   put json_ToArray (dropJSON) into dropArray
+   put dropArray ["text"] into droppedURL
+   -- put fedwiki_ConstructErrorJSON (droppedURL) into someJSON
+
+   switch
+      case droppedURL is empty
+         put "Error, expecting an audioboo clip url and it is empty" into errorText
+         put fedwiki_ConstructErrorJSON (errorText) into someJSON
+   		break
+      case droppedURL is a number
+         -- let's assume it is an audioboom-clip-ID
+         put audioboom_GuessClipJSON (droppedURL) into someJSON
+         break
+      default
+         put audioboom_GuessClipJSON (droppedURL) into someJSON
+         if someJSON is empty then
+            put "Error, this was not an audioboo clip url" into errorText
+            put fedwiki_ConstructNewPageArray ("Error", errorText) into someArray
+   			put json_FromArray (someArray) into someJSON
+         end if
+   end switch
+
+   /*
+	rigSetHeader "Content-Type: application/json; charset=utf-8"
+	rigSetHeader "Access-Control-Allow-Origin: *"
+	rigSetHeader "Access-Control-Allow-Headers: Accept, Authorization, Content-Type"
+	rigSetHeader "Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE OPTIONS, LINK, UNLINK"
+	rigSetOutput someJSON
+   */
+
+   put new header "Content-Type: application/json; charset=utf-8"
+   put new header "Access-Control-Allow-Origin: *"
+   put new header "Access-Control-Allow-Headers: Accept, Authorization, Content-Type"
+   put new header "Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE OPTIONS, LINK, UNLINK"
+   put someJSON
+end index
