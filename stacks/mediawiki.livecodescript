@@ -12,8 +12,25 @@ on index
          -- a fedwiki wikipedia form
          fedwiki_SetDroppedFaviconInfo fedwikiSlug, fedwikiDomain
          -- put the result into isFavicon
-         put mediawiki_FetchPageArray (fedwikiSlug, true) into fedwikiPageArray
+         wikipedia_NormaliseTitle fedwikiSlug, pageTitle, pageID
+         put mediawiki_FetchPageArray (pageTitle, true) into fedwikiPageArray
          fedwiki_ReturnPageArray fedwikiPageArray
+         break
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.webm)", shortVideoFile)
+         put "A video from the commons..." into someText
+         put wikicommons_ConstructVideoPageArray ("Wikimedia Video", someText, droppedURL, shortVideoFile) into pageArray
+         fedwiki_StripJournalToCreate pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
+         -- put wikicommons_FetchBasicTwoImagePageArray (shortImageFile, pPageTitle, pSomeText, droppedURL) into pageArray
+         -- put urldecode (shortImageFile) into shortImageFile
+         put "Wikimedia Image" into pageTitle
+         put "Drag these images to your source page..." into someText
+         put fedwiki_ConstructPageArray (pageTitle, someText) into pageArray   
+         wikicommons_FetchAndAddTwoImages pageArray, shortImageFile
+         fedwiki_StripJournalToCreate pageArray
+         fedwiki_ReturnPageArray pageArray
          break
       case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
          thumbNail droppedHtml
@@ -55,11 +72,21 @@ on search
    */
    
    put fedwiki_GetDroppedArray() into postArray
+   put postArray ["url"] into postURL
+   set the itemdelimiter to slash
+   put item 3 of postURL into wikiDomain
    put postArray ["text"] into fedwikiSlug
-   put postArray ["lang"] into lang
-   put postArray ["apiStem"] into apiStem
    --
-   put mediawiki_FetchPageArray (fedwikiSlug, true, apiStem, lang) into fedwikiPageArray
+   put fedwiki_PageJsonUrl (wikiDomain, fedwikiSlug) into jsonURL 
+   fedwiki_TestJsonUrl jsonURL, pageTitle, storyArray, journalArray
+   if the result is true then
+      wikipedia_NormaliseTitle pageTitle, pageTitle, pageID
+      -- put fedwiki_ConstructErrorJSON (wikiDomain, fedwikiSlug) into pageJSON
+      -- fedwiki_ReturnJSON pageJSON
+   else
+      wikipedia_NormaliseTitle fedwikiSlug, pageTitle, pageID
+   end if
+   put mediawiki_FetchPageArray (pageTitle, true) into fedwikiPageArray
    fedwiki_ReturnPageArray fedwikiPageArray
 end search
 
@@ -107,7 +134,7 @@ on importSection
       -- put fedwikipedia_FetchSectionSummaryPageArray (pageSlug, sectionNum) into fedwikiPageArray
       put wikicommons_ConstructSectionPageArray (pageSlug, sectionNum, droppedURL) into fedwikiPageArray
       if newPageTitle is not empty then
-         put newPageTitle into fedwikiPageArray ["title"]
+         fedwiki_RenamePage fedwikiPageArray, newPageTitle
       end if
       fedwiki_ReturnPageArray fedwikiPageArray
    else
@@ -217,3 +244,4 @@ on transportAgain
          return false
    end switch
 end transportAgain
+

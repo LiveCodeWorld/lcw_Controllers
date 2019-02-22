@@ -1,10 +1,10 @@
-﻿script "c0de.lc" with behavior "behavior_RigLocalOveride"
+﻿script "crypto.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
    return "lib_Fedwiki,lib_FedwikiRoster"
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("c0de.academy") into refTable
+   put atopia_FetchRoster ("cryptoacademy.org") into refTable
    put fedwiki_ConstructRosterPageArray (refTable) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index

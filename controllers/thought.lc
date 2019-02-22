@@ -25,6 +25,7 @@
 
    command thought
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_AtopiaFetch.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
    end thought
    
@@ -36,7 +37,7 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("thought.garden") into refTable
+      put atopia_FetchRoster ("thought.garden") into refTable
       put fedwiki_ConstructRosterPageArray (refTable) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index

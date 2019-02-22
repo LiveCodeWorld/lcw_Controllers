@@ -1,6 +1,6 @@
 ﻿script "paper.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_Dropbox,model_Secret"
+   return "lib_Fedwiki,lib_FedwikiCreate,lib_DropBox,model_Secret"
 end dep_StackNames
 
 on index
@@ -21,7 +21,29 @@ on index
    end switch
 end index
 
+on paper_update docID, revisionID
+   if the environment = "server" then
+      put rigFetchSegment(3, "") into docID
+      put rigFetchSegment(4, "") into revisionID
+   else
+      put "DfTlWvGHJCz8abte3fvPb" into docID
+      put 7 into revisionID
+   end if
+   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   
+   put "# Hello World/n" & droppedURL into newMarkdown
+   --
+   paper_UpdateDocument newMarkdown, docID, revisionID
+   put the result into resultJSON
+   
+   put revisionID && resultJSON into someText
+   fedwiki_ExitAndReturnError someText, "Here is the Doc ID"
+end paper_update
+
 on paper_from_wiki
+   rigLoadHelper "file"
+   put "./assets/json/paper.json" into jsonAssetPath
+   --
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
    --
    fedwiki_TestJsonUrl droppedURL, pageTitle, storyArray, journalArray
@@ -33,13 +55,55 @@ on paper_from_wiki
    --
    paper_CreateDocument pageMarkdown
    put the result into resultJSON
+   --
+   rig_SetJson jsonAssetPath, resultJSON
+   put the result into storeResult
+   put rig_GetJson (jsonAssetPath) into resultJSON
+   put rigGetFileInfo (jsonAssetPath, "serverPath") into serverPath
+   
+   
+   /*
+   {"doc_id": "S0kqkDjSQjPHZea06WqHn", "revision": 2, "title": "Paper Transport"}
+   */
+   put json_ToArray (resultJSON) into resultArray
+   put resultArray ["doc_id"] into docID
+   put resultArray ["revision"] into revisionNum
+   put resultArray ["title"] into pageTitle
+   --
+   put paper_ConstructDocUrl (docID) into docURL
+   
+   put serverPath into curlyArray ["Page Title"]
+   put docURL into curlyArray ["Dropbox Paper Document URL"]
+   put docID into curlyArray ["Paper DocID"]
    
    -- here we can create a database as api does not provide info
+   -- http://transport.fedwiki.org/view/welcome-visitors/view/paper-transport/view/paper-dialogue-template
+   -- put fedwiki_FetchPageTemplate ("transport.fedwiki.org", "paper-dialogue-template", "Dropbox Paper Document URL", docURL) into pageArray
+   put fedwiki_FetchPageTemplate ("transport.fedwiki.org", "paper-dialogue-template", curlyArray) into pageArray
+   --
+   put "Update" && pageTitle into pageArray ["title"]
+   --
+   fedwiki_ReturnPageArray pageArray
+   
+   /*
    put fedwiki_ConstructErrorJSON (resultJSON) into pageJSON
    fedwiki_ReturnJSON pageJSON
-   
    return pageJSON
+   */
 end paper_from_wiki
+
+function rig_GetJson jsonAssetPath
+   put rigReadFile (jsonAssetPath) into resultJSON
+   return resultJSON
+end rig_GetJson
+
+command rig_SetJson jsonAssetPath, resultJSON
+   if rigWriteFile (jsonAssetPath, resultJSON) is FALSE then
+      return "Error, unable to write the file"
+   else
+      return "Great!" && jsonAssetPath
+   end if
+end rig_SetJson
 
 
 /* == Test ==

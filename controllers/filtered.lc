@@ -1,7 +1,7 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The c0de.lc controller can be found at: c0de.lc
+   The filtered.lc controller can be found at: filtered.lc
    Here is some test help
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,c0de" into gControllerHandlers
+   put "index,filtered" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -19,14 +19,15 @@
    into the global array "gData".
 
    Write any initialisation statements (loading any neeeded libraries for instance)
-   into the initialisation handler "c0de.lc" below.
+   into the initialisation handler "filtered.lc" below.
    --
    */
 
-   command c0de
+   command filtered
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-   end c0de
+      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
+   end filtered
    
 
    /* ==  CODE  ==
@@ -36,8 +37,7 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("c0de.academy") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      put fedwiki_FetchFilteredFederationActivity ("server.fedwiki.org", "atopia-domain-index", "741a0fcdd3ff76b2") into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

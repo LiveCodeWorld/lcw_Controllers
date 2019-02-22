@@ -4,9 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put atopia_FetchStoredDomains ("platform.earth") into refTable
+   put atopia_FetchRoster ("platform.earth") into refTable
    put fedwiki_ConstructRosterPageArray (refTable) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index
-
-

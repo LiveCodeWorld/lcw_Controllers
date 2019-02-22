@@ -1,12 +1,12 @@
 ﻿script "fedwiki.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_FedwikiRoster"
+   return "lib_Fedwiki,lib_FedwikiRoster,lib_AtopiaFetch"
 end dep_StackNames
 
 on index
-   -- fetch fedwiki.org domains
-   put atopia_FetchStoredDomains ("fedwiki.org") into refTable
-   put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+   -- put atopia_FetchStoredDomains ("fedwiki.org") into wikiDomains -- uses json plugin
+   put atopia_FetchRoster ("fedwiki.org") into wikiDomains
+   put fedwiki_ConstructRosterPageArray (wikiDomains) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index
 

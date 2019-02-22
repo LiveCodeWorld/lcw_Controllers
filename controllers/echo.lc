@@ -36,39 +36,47 @@
    */
    
    on index
-      put _ConstructTestText() into someText
-      put fedwiki_ConstructErrorJSON (someText) into someJSON
-      fedwiki_ReturnJSON someJSON
+      put _ConstructTestPageArray ("Echo") into pageArray
+      fedwiki_ReturnPageArray pageArray
    end index
    
-   on form
-      -- a test of using a wiki page as a form
-      put fedwiki_GetDroppedArray() into postArray
-      put postArray ["wikiDomain"] into wikiDomain
-      put postArray ["pageSlug"] into pageSlug
+   function _ConstructTestPageArray pageTitle
+      put pageTitle into pageArray ["title"]
+      put fedwiki_ConstructJournalArray (pageTitle) into pageArray ["journal"]
+      put _ConstructTestText() into someMarkdown
+      fedwiki_AddMarkdownToPageArray pageArray, someMarkdown
       --
-      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
-      put pageArray ["title"] into pageTitle
-      put "Fetched from:" && pageTitle into someTitle
-      put fedwiki_FindFirstStoryItemText (pageArray) into itemText
-      --
-      -- put json_FromArray (dropArray) into itemText
-      put fedwiki_ConstructErrorJSON (itemText, someTitle) into someJSON
-      fedwiki_ReturnJSON someJSON
-   end form
+      return pageArray
+   end _ConstructTestPageArray
    
    function _ConstructTestText
+      local someText
+      
+      put "# Dropped URL fedwiki_GetDroppedUrl()" & CR after someText
+      --
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put droppedURL & CR & $REQUEST_URI into someText
+      put droppedURL & CR after someText
       -- 
-      put CR & CR after someText
+      put CR after someText
       --
       rigLoaderLoadLibrary "Useragent"
       put rigBrowser() into tBrowser
-      put "Browser:" && tBrowser & CR & CR after someText
+      put "__Browser:__" && tBrowser & CR after someText
       --
       put fedwiki_IsFaviconDrop() into isFavicon
-      put "Dropped favicon:" && isFavicon & CR & CR after someText
+      put "__Dropped favicon:__" && isFavicon & CR & CR after someText
+      -- 
+      put CR after someText
+      --
+      put "# $_POST_RAW" & CR after someText
+      put $_POST_RAW & CR after someText
+      --
+      put CR after someText
+      --
+      put "# $_SERVER" & CR after someText
+      put $_SERVER into tServerArray
+      combine tServerArray using CR and space
+      put tServerArray & CR after someText
       --
       /*
       -- rigSetConfigItem "bye", "hello"
@@ -77,12 +85,7 @@
       put "Config:" && it & CR & CR after someText
       */
       --
-      put $_POST_RAW after someText
-      --
-      put $_SERVER into tServerArray
-      combine tServerArray using CR and space
-      put CR & CR & tServerArray after someText
-      --
+      delete char -1 of someText
       return someText
    end _ConstructTestText
    
@@ -102,6 +105,22 @@
       end repeat
       return someText
    end _MoreText
+   
+   on form
+      -- a test of using a wiki page as a form
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["wikiDomain"] into wikiDomain
+      put postArray ["pageSlug"] into pageSlug
+      --
+      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
+      put pageArray ["title"] into pageTitle
+      put "Fetched from:" && pageTitle into someTitle
+      put fedwiki_FindFirstStoryItemText (pageArray) into itemText
+      --
+      -- put json_FromArray (dropArray) into itemText
+      put fedwiki_ConstructErrorJSON (itemText, someTitle) into someJSON
+      fedwiki_ReturnJSON someJSON
+   end form
    
    on myip
       put rigIpAddress() after myIP

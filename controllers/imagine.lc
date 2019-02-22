@@ -42,7 +42,7 @@
    
    on index
       put fedwiki_GetDroppedUrl() into droppedURL
-      
+      set the itemdelimiter to "."
       switch
          case droppedURL begins with "https://www.listennotes.com/podcasts/"
             fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc/listenNotes"
@@ -121,31 +121,16 @@
    end index
    
    command favicon
-      put fedwiki_GetDroppedUrl() into droppedURL
-      --
-      set the itemDelimiter to "/"
-      put item 3 of droppedURL into fedwikiDomain
-      put item -1 of droppedURL into pageSlug
-      replace ".html" with empty in pageSlug
-      
-      put fedwiki_FetchSitemapArray (fedwikiDomain) into siteMapArray
-      -- display_Array siteMapArray
-      
-      if siteMapArray is an array then
-         /*
-         -- here we could test to see if fedwiki page already exists
-         put fedwiki_FindSlug (pageSlug, siteMapArray) into indexNum
-         if indexNum = 0 then
-            -- no page exists yet
-         else
-            -- there is already a page
-         end if
-         */
-         
-         -- post to mediawiki/search transporter
-         put "https://rest.livecode.world/mediawiki/search" into restURL
-         put fedwiki_EncodePost (pageSlug) into postJSON
-         fedwiki_PostJSON postJSON, restURL
+      -- already checked with "fedwiki_IsFaviconDrop"
+      fedwiki_SetDroppedFaviconInfo pageSlug, fedwikiDomain
+      if the result is true then
+         put fedwiki_GetDroppedUrl() into droppedURL
+         put pageSlug into postArray ["text"]
+         put droppedURL into postArray ["url"]
+         put empty into postArray ["html"]
+         put json_FromArray (postArray) into postJSON
+         --
+         fedwiki_PostJSON postJSON, "https://rest.livecode.world/mediawiki/search"
          --
          put the result into pageJSON
          fedwiki_ReturnJSON pageJSON

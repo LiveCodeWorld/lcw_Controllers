@@ -2,7 +2,7 @@
    /* =  DESCRIPTION  =
    --
    The livecode.lc controller can be found at: livecode.lc
-
+   Here is some test help
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "livecode" into gControllerHandlers
+   put "index,livecode" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -24,7 +24,8 @@
    */
 
    command livecode
-
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
    end livecode
    
 
@@ -35,13 +36,9 @@
    */
    
    on index
-   -- put "Hello" into testArray ["World"]
-   -- put json_FromArray (testArray) into someJSON
-   -- put $_SERVER ["DOCUMENT_ROOT"] into documentRoot
- 
-   -- put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
-   put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
-   fedwiki_ReturnJSON someJSON
-end index
+      put atopia_FetchStoredDomains ("livecode.world") into refTable
+      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end index
 
 ?>

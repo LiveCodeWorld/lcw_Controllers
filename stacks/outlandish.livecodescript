@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put atopia_FetchStoredDomains ("outlandish.academy") into refTable
+   put atopia_FetchRoster ("outlandish.academy") into refTable
    put fedwiki_ConstructRosterPageArray (refTable) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index

@@ -1,8 +1,8 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The c0de.lc controller can be found at: c0de.lc
-   Here is some test help
+   The filtered_activity.lc controller can be found at: filtered_activity.lc
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,c0de" into gControllerHandlers
+   put "filtered_activity" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -19,14 +19,13 @@
    into the global array "gData".
 
    Write any initialisation statements (loading any neeeded libraries for instance)
-   into the initialisation handler "c0de.lc" below.
+   into the initialisation handler "filtered_activity.lc" below.
    --
    */
 
-   command c0de
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-   end c0de
+   command filtered_activity
+
+   end filtered_activity
    
 
    /* ==  CODE  ==
@@ -36,9 +35,13 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("c0de.academy") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
-      fedwiki_ReturnPageArray pageArray
-   end index
+   -- put "Hello" into testArray ["World"]
+   -- put json_FromArray (testArray) into someJSON
+   -- put $_SERVER ["DOCUMENT_ROOT"] into documentRoot
+ 
+   -- put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+   put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
+   fedwiki_ReturnJSON someJSON
+end index
 
 ?>

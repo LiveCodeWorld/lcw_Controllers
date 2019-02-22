@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,journal,compact_Refs,fork_Cleaner,fix_Title,clean_Title,clean_FirstLetter,fedwiki" into gControllerHandlers
+   put "index,journal,fork_Cleaner,clean_FirstLetter,compact_Refs,clean_Title,fix_Title,fedwiki" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -44,7 +44,7 @@
    
    on compact_Refs
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      if fedwiki_CheckUrlIsHtml (wikiPageURL, errorMsg) is false then
+      if fedwiki_IsHtmlUrl (droppedURL, errorMsg) is false then
          put merge ("The dropped url [[droppedURL]] is not a [[Fedwiki HTML url]]. Use the link at the bottom of the page") into errorText
          fedwiki_ExitAndReturnError errorText, "Not a Fedwiki HTML URL"
       end if
@@ -56,33 +56,22 @@
       fedwiki_ReturnPageArray pageArray
    end compact_Refs
    
-   function fedwiki_CheckUrlIsHtml wikiPageURL, @errorMsg
-      -- http://tools.progressivedemocracy.cc/collaborative-bookmarking.html
-      set the itemdelimiter to slash
-      if the number of items of wikiPageURL is not 4 then
-         put "Error, dropped url is not a single .html wiki page" into errorMsg
-         return false
-      end if
-      
-      set the itemdelimiter to "."
-      if item -1 of wikiPageURL is not "html" then
-         put "Error, dropped url is not a single .html wiki page" into errorMsg
-         return false
-      end if
-      
-      return true
-   end fedwiki_CheckUrlIsHtml
-   
    on fork_Cleaner
-      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put fedwiki_CleanLastLineUpJournal (droppedURL, "create,fork", "fedwiki-transport") into cleanJSON
-      fedwiki_ReturnJSON cleanJSON
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
+      --
+      fedwiki_CleanJournalArray pageArray, "create,fork"
+      --
+      fedwiki_ReturnPageArray pageArray
    end fork_Cleaner
    
    on journal
-      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put fedwiki_CleanLastLineUpJournal (droppedURL) into cleanJSON
-      fedwiki_ReturnJSON cleanJSON
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
+      --
+      fedwiki_CleanJournalArray pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
    end journal
    
    on clean_Title

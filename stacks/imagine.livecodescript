@@ -1,11 +1,11 @@
 ﻿script "imagine.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_MediaWiki,lib_FedWikiPedia,lib_HTML,lib_Scrape,lib_REST,lib_Citation"
+    return "lib_Fedwiki,lib_MediaWiki,lib_FedWikiPedia,lib_HTML,lib_Scrape,lib_REST,lib_Citation"
 end dep_StackNames
 
 on index
    put fedwiki_GetDroppedUrl() into droppedURL
-   
+   set the itemdelimiter to "."
    switch
       case droppedURL begins with "https://www.listennotes.com/podcasts/"
          fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc/listenNotes"
@@ -49,6 +49,9 @@ on index
       case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
       case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
       case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.webm)", shortVideoFile)
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
+      -- case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
       case matchText (droppedURL, "https://(.+).wikipedia.org/(.+)", lastBit)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/mediawiki"
          break
@@ -74,7 +77,7 @@ on index
       case fedwiki_IsFaviconDrop()
          favicon
          break
-      case item -1 of droppedURL is among the items of "jpg.jpeg.png.gif.webp"
+      case item -1 of droppedURL is among the items of "jpg.jpeg.png.gif.webp.svg"
          photo
          break
       default
@@ -87,9 +90,13 @@ command favicon
    -- already checked with "fedwiki_IsFaviconDrop"
    fedwiki_SetDroppedFaviconInfo pageSlug, fedwikiDomain
    if the result is true then
-      put "https://rest.livecode.world/mediawiki/search" into restURL
-      put fedwiki_EncodePost (pageSlug) into postJSON
-      fedwiki_PostJSON postJSON, restURL
+      put fedwiki_GetDroppedUrl() into droppedURL
+      put pageSlug into postArray ["text"]
+      put droppedURL into postArray ["url"]
+      put empty into postArray ["html"]
+      put json_FromArray (postArray) into postJSON
+      --
+      fedwiki_PostJSON postJSON, "https://rest.livecode.world/mediawiki/search"
       --
       put the result into pageJSON
       fedwiki_ReturnJSON pageJSON
