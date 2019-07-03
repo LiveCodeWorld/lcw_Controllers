@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,map" into gControllerHandlers
+   put "index,test,map" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -35,29 +35,25 @@
    --
    */
    
-   function dep_ListShortFiles
-      put "lib_Fedwiki.livecode,lib_RevIgniter.livecode" into shortFiles
-      return shortFiles
-   end dep_ListShortFiles
-   
    on index
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      if droppedURL is empty then
-         fedwiki_ExitAndReturnError "Nothing dropped", "Error"
-      end if
-      
-      set the itemdelimiter to "?"
-      -- put "https://tools.wmflabs.org/geohack/geohack.php?pagename=Greater_London&params=51_30_N_0_5_W_region:GB_type:adm1st" into droppedURL
+      --
       switch
          case matchtext (droppedURL, "^https://tools.wmflabs.org/geohack/geohack.php\?pagename=(.+)&params=(.+)", pageName, geoInfo)
             -- put "https://tools.wmflabs.org/geohack/geohack.php?pagename=Harringay&params=51.5819_N_-0.0994_E_region:GB_type:city(13272)" into droppedURL
             -- put "https://tools.wmflabs.org/geohack/geohack.php?pagename=Bilbao&params=43_15_25_N_2_55_25_W_region:ES_type:city" into droppedURL
+            --
             put urldecode (pageName) into pageName
             replace "_" with space in pageName
             put "Map of" && pageName into pageTitle
             put pageName into pinTitle
             --         
             geo_ExtractLatLong geoInfo, mLat, mLon, regionInfo
+            --
+            if mLat is not a number or mLat is not a number then
+               fedwiki_ExitAndReturnError ("Problem parsing map data" && geoInfo,mLat,mLon), "Error"
+               exit to top
+            end if
             put 15 into mZoom -- should work out from regionInfo
             --
             put "http://www.openstreetmap.org/#map=" & mZoom & "/" & mLat & "/" & mLon into openstreetmapURL
@@ -274,7 +270,7 @@
       return dms
    end geo_LongToDms
       
-      private function geo_DecToDms decValue, nwse
+   private function geo_DecToDms decValue, nwse
       put trunc (decValue) into someDegrees
       subtract someDegrees from decValue
       put decValue * 60 into minuteValue
@@ -295,40 +291,67 @@
       
    command geo_SetNegative @decValue, nwse
       if char 1 of nwse is among the items of "w,s" then
-      put -1 * decValue into decValue
-   end if
+         put -1 * decValue into decValue
+      end if
    end geo_SetNegative
+   
+   on test
+      put "51.5007,-0.1245,region:GB_type:landmark" into testArray ["51.5007_N_-0.1245_E_region:GB_type:landmark"]
+      put "51.5,-0.083333,region:GB_type:adm1st" into testArray ["51_30_N_0_5_W_region:GB_type:adm1st"]
+      put "51.5,-0.116667,type:city" into testArray ["51_30_N_0_7_W_type:city"]
+      put "51.178844,-1.826189,type:landmark" into testArray ["51_10_43.84_N_1_49_34.28_W_type:landmark"]   
+      --
+      repeat for each key geoStuff in testArray
+         put testArray [geoStuff] into testResult
+         --
+         geo_ExtractLatLong geoStuff, decLat, decLong, regionInfo
+         --
+         put decLat,decLong,regionInfo into calculatedResult
+         if calculatedResult = testResult then
+            -- passed
+         else
+            put calculatedResult
+            breakpoint
+            exit to top
+         end if
+      end repeat
       
-   command geo_ExtractLatLong geoStuff, @decLat, @decLong, @regionInfo
-      -- put "51_30_N_0_5_W_region:GB_type:adm1st" into geoStuff
-      -- put "51_30_N_0_7_W_type:city" into geoStuff
-      -- put "51_10_43.84_N_1_49_34.28_W_type:landmark" into geoStuff
-      
+      answer "Passed All"
+   end test
+   
+   command geo_ParseGeoStuff geoStuff, @nwse, @someDegrees, @someMinutes, @someSeconds
       set the itemdelimiter to "_"  
-      put item 1 of geoStuff into someDegrees
-      put item 2 of geoStuff into someMinutes
-      put item 3 of geoStuff into someSeconds
-      if someSeconds is not a number then
-         put someSeconds into nwse
-         put 0 into someSeconds
-         delete item 1 to 3 of geoStuff
-      else
-         put item 4 of geoStuff into nwse
-         delete item 1 to 4 of geoStuff
-      end if
+      repeat with ii =1 to 4
+         -- repeat 4 -- bug: server does not deal with repeat loop properly !!!
+         put item 1 of geoStuff into someNum
+         delete item 1 of geoStuff
+         --
+         if someNum is not a number then
+            put someNum into nwse
+            --
+            set the itemdelimiter to comma
+            put item 1 of decimalTimeItems into someDegrees
+            put item 2 of decimalTimeItems into someMinutes
+            put item 3 of decimalTimeItems into someSeconds
+            return geoStuff
+         else
+            put someNum & comma after decimalTimeItems
+         end if
+      end repeat
+      --
+      put fedwiki_ConstructErrorJSON (ii && geoStuff, "Should not exit here") into pageJSON
+      fedwiki_ReturnJSON pageJSON
+      exit to top
+   end geo_ParseGeoStuff
+   
+   command geo_ExtractLatLong geoStuff, @decLat, @decLong, @regionInfo
+      geo_ParseGeoStuff geoStuff, nwse, someDegrees, someMinutes, someSeconds
+      put the result into trimmedGeoStuff
       put geo_DmsToDecimal (someDegrees, someMinutes, someSeconds, nwse) into decLat
-      
-      put item 1 of geoStuff into someDegrees
-      put item 2 of geoStuff into someMinutes
-      put item 3 of geoStuff into someSeconds
-      if someSeconds is not a number then
-         put someSeconds into nwse
-         put 0 into someSeconds
-      else
-         put item 4 of geoStuff into nwse
-      end if
+      --
+      geo_ParseGeoStuff trimmedGeoStuff, nwse, someDegrees, someMinutes, someSeconds
+      put the result into regionInfo
       put geo_DmsToDecimal (someDegrees, someMinutes, someSeconds, nwse) into decLong
-      put item -1 of geoStuff into regionInfo
       return true
    end geo_ExtractLatLong
 

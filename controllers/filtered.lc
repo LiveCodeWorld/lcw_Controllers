@@ -26,7 +26,8 @@
    command filtered
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end filtered
    
 
@@ -37,7 +38,9 @@
    */
    
    on index
-      put fedwiki_FetchFilteredFederationActivity ("server.fedwiki.org", "atopia-domain-index", "741a0fcdd3ff76b2") into pageArray
+      put federation_RecentWithoutAtopiaDomains() into withoutAtopiaDomains
+      put "Filtered Federation Activity" & CR & CR before withoutAtopiaDomains
+      put roster_ConstructPageArray (withoutAtopiaDomains) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

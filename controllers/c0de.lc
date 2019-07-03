@@ -25,6 +25,7 @@
 
    command c0de
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
    end c0de
    
@@ -36,8 +37,8 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("c0de.academy") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      put atopia_FetchRoster ("c0de.academy") into refTable
+      put roster_ConstructPageArray (refTable) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

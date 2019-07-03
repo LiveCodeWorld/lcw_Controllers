@@ -1,25 +1,26 @@
-﻿script "onetab.lc"
+﻿script "onetab.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_Scrape"
+   return "lib_Fedwiki,lib_Scrape,lib_Citation,lib_REST,lib_HTML"
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
-   
-   -- https://www.one-tab.com/page/VecNztSjSAuL_u_UiaXMjw
+   markdown
+end index
+
+on fullfetch
+   put fedwiki_GetDroppedUrl() into someUrl
    if someUrl begins with "https://www.one-tab.com" then
-      put _ConstructOneTabPageArray (someUrl) into fedwikiPageArray
-      -- put _FetchOneTabPageArray (someUrl) into fedwikiPageArray
-      put json_FromArray (fedwikiPageArray) into someJSON
+      put _ConstructOneTabPageArray (someUrl) into pageArray
+      put json_FromArray (pageArray) into someJSON
    else
       put "Not a [[OneTab]] web page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
       put fedwiki_ConstructErrorJSON (someInfo, "Error") into someJSON
    end if
    fedwiki_ReturnJson someJSON
-end index
+end fullfetch
 
 on html
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+   put fedwiki_GetDroppedUrl() into someUrl
    if someUrl begins with "https://www.one-tab.com" then
       put _FetchOneTabPageArray (someUrl, "htmlSection") into pageArray
       put json_FromArray (pageArray) into someJSON
@@ -31,7 +32,7 @@ on html
 end html
 
 on htmlParagraphs
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+   put fedwiki_GetDroppedUrl() into someUrl
    if someUrl begins with "https://www.one-tab.com" then
       put _FetchOneTabPageArray (someUrl, "htmlParagraphs") into pageArray
       put json_FromArray (pageArray) into someJSON
@@ -43,9 +44,7 @@ on htmlParagraphs
 end htmlParagraphs
 
 on markdown
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
-   
-   -- https://www.one-tab.com/page/VecNztSjSAuL_u_UiaXMjw
+   put fedwiki_GetDroppedUrl() into someUrl
    if someUrl begins with "https://www.one-tab.com" then
       put _FetchOneTabPageArray (someUrl, "markdown") into pageArray
       put json_FromArray (pageArray) into someJSON
@@ -56,9 +55,9 @@ on markdown
    fedwiki_ReturnJson someJSON
 end markdown
 
-private command _AddHtmlParagraphs @fedwikiPageArray, tabTitle, divSection, parseArray
+private command _AddHtmlParagraphs @pageArray, tabTitle, divSection, parseArray
    put "#" && tabTitle into someMarkDown
-   fedwiki_AddMarkdownToPageArray fedwikiPageArray, someMarkDown
+   fedwiki_AddMarkdownToPageArray pageArray, someMarkDown
    --
    put 1 into urlLineNum
    repeat for each line htmlLine in divSection
@@ -67,17 +66,17 @@ private command _AddHtmlParagraphs @fedwikiPageArray, tabTitle, divSection, pars
       put resultArray ["url"] into restURL
       put resultArray ["handler"] into tHandler
       --
-      dispatch tHandler with fedwikiPageArray and linkURL
+      dispatch tHandler with pageArray and linkURL
       --
       add 1 to urlLineNum
    end repeat
 end _AddHtmlParagraphs
 
-command transport_GoogleImage fedwikiPageArray, linkURL
+command transport_GoogleImage pageArray, linkURL
    _DeconstructGoogleImageUrl linkURL, imageURL, refURL, searchTerms, w, h
    put "Google Image Result for" && kwote (searchTerms) into someCaption
-   fedwiki_AddImageToPageArray fedwikiPageArray, imageURL, someCaption, refURL
-   return fedwikiPageArray
+   fedwiki_AddImageToPageArray pageArray, imageURL, someCaption, refURL
+   return pageArray
 end transport_GoogleImage
 
 function transport_ParseURL droppedURL
@@ -157,7 +156,7 @@ function _ConstructOneTabPageArray oneTabUrl
    put the result into parseArray
    put parseArray ["urls"] into urlArray
    --
-   put fedwiki_ConstructNewPageArray (tabTitle, headerBit) into fedwikiPageArray
+   put fedwiki_ConstructNewPageArray (tabTitle, headerBit) into pageArray
    
    put item 2 of the extents of urlArray into maxItemNum
    repeat with itemNum = 1 to maxItemNum
@@ -180,7 +179,7 @@ function _ConstructOneTabPageArray oneTabUrl
             next repeat
             break
          case restURL is not empty
-            -- let's fetch a fedwikiPageArray
+            -- let's fetch a pageArray
             put fedwiki_EncodePost (linkURL) into postJSON
             fedwiki_PostJSON postJSON, restURL
             put the result into returnedJSON
@@ -191,10 +190,10 @@ function _ConstructOneTabPageArray oneTabUrl
             --
             if receivedStoryItemArray is an array then
                put "#" && receivedTitle into someMarkDown
-               fedwiki_AddMarkdownToPageArray fedwikiPageArray, someMarkDown
+               fedwiki_AddMarkdownToPageArray pageArray, someMarkDown
                
                -- add story to the end
-               fedwiki_AddStoryArray fedwikiPageArray, receivedStoryItemArray
+               fedwiki_AddStoryArray pageArray, receivedStoryItemArray
             end if
             break
          default
@@ -202,27 +201,26 @@ function _ConstructOneTabPageArray oneTabUrl
             dispatch tHandler with itemArray
             if it is "handled" then
                put the result into storyItemArray
-               fedwiki_AddStoryArray fedwikiPageArray, storyItemArray
+               fedwiki_AddStoryArray pageArray, storyItemArray
             end if
       end switch
    end repeat
    --
-   fedwiki_StripJournalToCreate fedwikiPageArray
-   return fedwikiPageArray
+   fedwiki_StripJournal pageArray
+   return pageArray
 end _ConstructOneTabPageArray
 
 command transport_Webpage itemArray
    put itemArray ["linkURL"] into linkURL
    put itemArray ["someTextLink"] into someTextLink
-   put scrape_ConstructFedwikiPageArray (linkURL, true, true, true) into fedwikiPageArray
-   -- put fedwikiPageArray ["title"] into pageTitle
+   put scrape_ConstructFedwikiPageArray (linkURL, true, true, true) into pageArray
    --
    put "#" && someTextLink into someMarkDown -- could use pageTitle
    put fedwiki_ConstructStoryMarkdownArray (someMarkdown) into storyItemArray [1]
    
    -- if scrape was succesful
-   if fedwikiPageArray is not empty then
-      put fedwikiPageArray ["story"] into webPageStoryArray
+   if pageArray is not empty then
+      put pageArray ["story"] into webPageStoryArray
       fedwiki_AddToStoryArrayItems storyItemArray, webPageStoryArray
    end if
    
@@ -264,7 +262,7 @@ private function _FetchOneTabPageArray oneTabUrl, pType
          -- _AddMarkdownSection pageArray, tabTitle, markDownLinks
          -- _AddImageSection parseArray, pageArray
    end switch
-   fedwiki_CleanJournalArray pageArray
+   fedwiki_StripJournal pageArray
    return pageArray
 end _FetchOneTabPageArray
 

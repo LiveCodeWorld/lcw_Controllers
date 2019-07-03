@@ -25,7 +25,10 @@
 
    command livecode
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
    end livecode
    
 
@@ -36,8 +39,8 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("livecode.world") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      put atopia_FetchRoster ("livecode.world") into wikiDomains
+      put roster_ConstructPageArray (wikiDomains) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

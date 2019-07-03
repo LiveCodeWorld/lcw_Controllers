@@ -38,14 +38,9 @@
    */
    
    on index
-      -- put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
-      -- put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
-      -- fedwiki_ReturnJSON someJSON
-      
       put cse_ConstructPostArray ("Federation", "wiki") into postArray
       cse_DeconstructPostArray postArray, cseName, googleQuery, pWord, cseOffset
       put cse_SearchAndConstructPageArray (googleQuery, pWord, cseOffset, cseName) into pageArray
-      --
       fedwiki_ReturnPageArray pageArray
    end index
    
@@ -55,7 +50,6 @@
       cse_DeconstructPostArray postArray, cseName, googleQuery, pWord, cseOffset
       put cse_SearchAndConstructPageArray (googleQuery, pWord, cseOffset, cseName) into pageArray
       --
-      -- fedwiki_ReturnPageArray pageArray
       put json_FromArray (pageArray) into someJSON
       replace "\u0022" with quote in someJSON
       fedwiki_ReturnJSON someJSON

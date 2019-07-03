@@ -1,18 +1,11 @@
-﻿script "filtered.lc"
-command filtered_activity
-   start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-   start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-   start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
-end filtered_activity
-
-
-/* ==  CODE  ==
---
-Here we put the public handlers the controller uses and exposes as urls.
---
-*/
+﻿script "filtered.lc" with behavior "behavior_RigLocalOveride"
+getprop dep_StackNames
+   return "lib_Federation,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Federation,model_PageArray"
+end dep_StackNames
 
 on index
-   put fedwiki_FetchFilteredFederationActivity ("server.fedwiki.org", "atopia-domain-index", "741a0fcdd3ff76b2") into pageArray
+   put federation_RecentWithoutAtopiaDomains() into withoutAtopiaDomains
+   put "Filtered Federation Activity" & CR & CR before withoutAtopiaDomains
+   put roster_ConstructPageArray (withoutAtopiaDomains) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index

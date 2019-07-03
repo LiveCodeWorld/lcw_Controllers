@@ -1,6 +1,6 @@
 ﻿script "map.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_RevIgniter"
+   return "lib_Exif,lib_Fedwiki,lib_PageArray,lib_RevIgniter"
 end dep_StackNames
 
 on index
@@ -100,8 +100,8 @@ on index
          put mLat & comma & mLon && pinTitle into pinLine
          put mapDescription & CR & pinLine into mapText
          --
-         fedwiki_AddMapToPageArray pageArray, mlat, mlon, mapText, mZoom
-         fedwiki_CleanJournalArray pageArray
+         pageArray_AddMap pageArray, mlat, mlon, mapText, mZoom
+         pageArray_CleanJournal pageArray
          --
          put json_FromArray (pageArray) into pageJSON
          fedwiki_ReturnJSON pageJSON
@@ -125,7 +125,7 @@ on index
          end if
    end switch
 end index
-      
+
 function fedwiki_OpenStreetMapPageArray pageTitle, mlat, mlon, mZoom, pMapDescription, pPinTitle
    -- this is for a map drop from openstreetmap or equivalent
    if pPinTitle is empty then put pageTitle into pinTitle
@@ -140,12 +140,12 @@ function fedwiki_OpenStreetMapPageArray pageTitle, mlat, mlon, mZoom, pMapDescri
       put mLat & comma & mLon && pPinTitle into pinLine
       put CR & pinLine after mapText
    end if
-   fedwiki_AddMapToPageArray pageArray, mlat, mlon, pMapDescription, mZoom
+   pageArray_AddMap pageArray, mlat, mlon, pMapDescription, mZoom
    
-   fedwiki_CleanJournalArray pageArray
+   pageArray_CleanJournal pageArray
    return pageArray
 end fedwiki_OpenStreetMapPageArray
-   
+
 function fedwiki_ConstructMapAndImagePageArray imageURL, imageDescription
    -- this is for a geolocated image drop
    put "Map Test" into pageTitle
@@ -169,7 +169,7 @@ function fedwiki_ConstructMapAndImagePageArray imageURL, imageDescription
    
    -- add the image
    put fedwiki_ConstructImageHtml (assetURL, imageCaption, assetURL, "- source") into imageHTML
-   fedwiki_AddHtmlToPageArray pageArray, imageHTML
+   pageArray_AddHtml pageArray, imageHTML
    
    -- if there is GPS info add a map
    if exifArray is an array then
@@ -182,15 +182,15 @@ function fedwiki_ConstructMapAndImagePageArray imageURL, imageDescription
       put mLat & comma & mLon && pinTitle into pinLine
       put CR & pinLine after mapText
       --
-      fedwiki_AddMapToPageArray pageArray, mlat, mlon, mapText, mZoom
+      pageArray_AddMap pageArray, mlat, mlon, mapText, mZoom
    else
       put "Image Test" into pageArray ["title"]
    end if
    
-   fedwiki_CleanJournalArray pageArray
+   pageArray_CleanJournal pageArray
    return pageArray
 end fedwiki_ConstructMapAndImagePageArray
-   
+
 function geo_ConstructHgeo mlon, mlat, plonDisplay, platDisplay
    /*
    <p class="h-geo">
@@ -209,35 +209,35 @@ function geo_ConstructHgeo mlon, mlat, plonDisplay, platDisplay
    put merge (htmlTemplate) into someHTML
    return someHTML
 end geo_ConstructHgeo
-   
+
 function geo_LatToDms decValue
    --    <data class="p-latitude" value="-109.366667">109ÔøΩ 22? 0? W</data>
    -- put "-109.366667" into decValue
    
    if decValue > 0 then
-   put "E" into westOrEast
+      put "E" into westOrEast
    else
-   put -1 * decValue into decValue
-   put "W" into westOrEast
-end if
+      put -1 * decValue into decValue
+      put "W" into westOrEast
+   end if
    put geo_DecToDms (decValue, westOrEast) into dms
    return dms
 end geo_LatToDms
-   
+
 function geo_LongToDms decValue
    --  <data class="p-longitude" value="-27.116667">27ÔøΩ 7? 0? S</data>,
    -- put "-27.116667" into decValue
    
    if decValue > 0 then
-   put "N" into westOrEast
+      put "N" into westOrEast
    else
-   put -1 * decValue into decValue
-   put "S" into northOrSouth
-end if
+      put -1 * decValue into decValue
+      put "S" into northOrSouth
+   end if
    put geo_DecToDms (decValue, northOrSouth) into dms
    return dms
 end geo_LongToDms
-   
+
 private function geo_DecToDms decValue, nwse
    put trunc (decValue) into someDegrees
    subtract someDegrees from decValue
@@ -250,42 +250,18 @@ private function geo_DecToDms decValue, nwse
    put someDegrees & "&deg;" && someMinutes & "&apos;" && someSeconds & "&apos;" & "&apos;" && nwse into dms
    return dms
 end geo_DecToDms
-   
+
 function geo_DmsToDecimal someDegrees, someMinutes, someSeconds, nwse
    put someDegrees + someMinutes / 60 + someSeconds / 3600 into decValue
    geo_SetNegative decValue, nwse
    return decValue
 end geo_DmsToDecimal
-   
+
 command geo_SetNegative @decValue, nwse
    if char 1 of nwse is among the items of "w,s" then
       put -1 * decValue into decValue
    end if
 end geo_SetNegative
-
-on test
-   put "51.5007,-0.1245,region:GB_type:landmark" into testArray ["51.5007_N_-0.1245_E_region:GB_type:landmark"]
-   put "51.5,-0.083333,region:GB_type:adm1st" into testArray ["51_30_N_0_5_W_region:GB_type:adm1st"]
-   put "51.5,-0.116667,type:city" into testArray ["51_30_N_0_7_W_type:city"]
-   put "51.178844,-1.826189,type:landmark" into testArray ["51_10_43.84_N_1_49_34.28_W_type:landmark"]   
-   --
-   repeat for each key geoStuff in testArray
-      put testArray [geoStuff] into testResult
-      --
-      geo_ExtractLatLong geoStuff, decLat, decLong, regionInfo
-      --
-      put decLat,decLong,regionInfo into calculatedResult
-      if calculatedResult = testResult then
-         -- passed
-      else
-         put calculatedResult
-         breakpoint
-         exit to top
-      end if
-   end repeat
-   
-   answer "Passed All"
-end test
 
 command geo_ParseGeoStuff geoStuff, @nwse, @someDegrees, @someMinutes, @someSeconds
    set the itemdelimiter to "_"  
@@ -307,9 +283,8 @@ command geo_ParseGeoStuff geoStuff, @nwse, @someDegrees, @someMinutes, @someSeco
       end if
    end repeat
    --
-   put fedwiki_ConstructErrorJSON (ii && geoStuff, "Should not exit here") into pageJSON
-   fedwiki_ReturnJSON pageJSON
-   exit to top
+   put pageArray_Construct ("Should not exit here", ii && geoStuff) into pageArray
+   fedwiki_ReturnPageArray pageArray
 end geo_ParseGeoStuff
 
 command geo_ExtractLatLong geoStuff, @decLat, @decLong, @regionInfo

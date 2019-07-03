@@ -1,6 +1,6 @@
 ﻿script "paper.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_FedwikiCreate,lib_DropBox,model_Secret"
+   return "lib_Fedwiki,lib_RevIgniter,lib_FedwikiCreate,lib_DropBox,model_Secret"
 end dep_StackNames
 
 on index
@@ -92,19 +92,6 @@ on paper_from_wiki
    */
 end paper_from_wiki
 
-function rig_GetJson jsonAssetPath
-   put rigReadFile (jsonAssetPath) into resultJSON
-   return resultJSON
-end rig_GetJson
-
-command rig_SetJson jsonAssetPath, resultJSON
-   if rigWriteFile (jsonAssetPath, resultJSON) is FALSE then
-      return "Error, unable to write the file"
-   else
-      return "Great!" && jsonAssetPath
-   end if
-end rig_SetJson
-
 
 /* == Test ==
 */
@@ -161,3 +148,51 @@ command test
    put someJSON
    */
 end test
+
+function fedwiki_ConstructPageMarkdown pageTitle, storyArray
+   put "#" && pageTitle & CR into pageMarkdown
+   --
+   repeat with itemNum = 1 to item 2 of the extents of storyArray
+      put storyArray [itemNum]["type"] into itemType
+      put storyArray [itemNum]["text"] into itemText
+      put word 1 to -1 of itemText into itemText
+      
+      -- let's replace external wiki links with normal html links
+      fedwiki_ReplaceExternalLinks itemText
+      --
+      switch itemType
+         case "markdown"
+            if word 1 of itemText = "#" then
+               put "##" into word 1 of itemText
+               put itemText & CR after pageMarkdown
+            else
+               put itemText & CR & CR after pageMarkdown
+            end if
+            break
+         case "video"
+            _AddVideo pageMarkdown, itemText
+            break
+         case "html" -- could convert?
+         case "text"
+         default
+            put itemText & CR & CR after pageMarkdown
+      end switch
+   end repeat
+   return pageMarkdown
+end fedwiki_ConstructPageMarkdown
+
+private command _AddVideo @pageMarkdown, itemText
+   put word 1 of itemText into sWord
+   put word 2 of itemText into videoID
+   switch sWord
+      case "YOUTUBE"
+         put "[https://youtu.be/" & videoID & "](https://youtu.be/" & videoID & ")" & CR & CR after pageMarkdown
+         -- put youtube_ConstructWatchUrl (videoID) & CR & CR after pageMarkdown
+         break
+      case "Vimeo"
+         put vimeo_ConstructWatchUrl (videoID) & CR & CR after pageMarkdown
+         break
+      default
+         put itemText & CR & CR after pageMarkdown
+   end switch
+end _AddVideo

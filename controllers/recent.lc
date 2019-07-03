@@ -26,7 +26,9 @@
    command recent
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end recent
    
 
@@ -37,9 +39,9 @@
    */
    
    on index
-      put fedwiki_FetchRecentActiveDomains() into domainNames
+      put federation_FetchLiveRecentDomains() into domainNames
       put "Recent Federation Activity" & CR & CR & domainNames into strippedRosterText
-      put fedwiki_ConstructRosterPageArray (strippedRosterText) into pageArray
+      put roster_ConstructPageArray (strippedRosterText) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

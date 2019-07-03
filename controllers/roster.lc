@@ -2,7 +2,7 @@
    /* =  DESCRIPTION  =
    --
    The roster.lc controller can be found at: roster.lc
-   Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "cat,index,tsv,subdomain,domain,activity,federation,refs,atopia_merge,atopia_merge_top,visible_merge,roster" into gControllerHandlers
+   put "refs,activity,visible_merge,mayfly,atopia_merge_top,list,index,author,update,tsv,cat,federation,domain,roster" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -24,12 +24,18 @@
    */
 
    command roster
+      start using stack (gAPPPATH & "stacks/lib_AtopiaFetch.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Curly.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Fedray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_GoogleCustomSearch.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_URL.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
    end roster
    
 
@@ -40,80 +46,68 @@
    */
    
    on index 
-      -- fetch all Atopia domains
-      -- put atopia_FetchStoredDomains() into wikiDomains -- uses json plugin
       put atopia_FetchRoster() into wikiDomains
-      put fedwiki_ConstructRosterPageArray (wikiDomains) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      get roster_ConstructPageArray (wikiDomains)
+      fedwiki_ReturnPageArray it
    end index
    
+   on author
+      put rigFetchSegment(3, "") into authorName
+      replace "-" with space in authorName
+      -- put "david bovill" into authorName
+      put federation_FetchAuthorDomains (authorName) into wikiDomains
+      put roster_ConstructPageArray (wikiDomains) into pageArray
+      put pageArray_Construct ("Test", authorName) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end author
+   
    on tsv
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-      else
-         put empty into postArray ["wikiDomain"]
-         put empty into postArray ["minPageNum"]
-         put "_cse_jxekaghz3nw" into cseID
-      end if
-      
+      put fedwiki_GetDroppedArray() into postArray
       put postArray ["wikiDomain"] into wikiDomain
       put postArray ["minPageNum"] into minPageNum
       put postArray ["cseID"] into cseID
-      -- if minPageNum is empty then put 200 into minPageNum
       --
-      put atopia_FetchStoredDomains (wikiDomain, false, minPageNum) into someDomains
-      put cse_ConstructTSV (someDomains, cseID) into federationTSV
+      put atopia_FetchFedrayDomains (minPageNum) into atopiaDomains
+      roster_DomainFilter atopiaDomains, wikiDomain
+      put cse_ConstructTSV (atopiaDomains, cseID) into federationTSV
       --
-      put fedwiki_ConstructErrorJSON (federationTSV, "Federation TSV") into errorJSON
-      fedwiki_ReturnJSON errorJSON
+      put pageArray_Construct ("Federation TSV", federationTSV) into pageArray
+      fedwiki_ReturnPageArray pageArray
    end tsv
    
    on cat
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-      else
-         put "livecode-site-refs" into postArray ["pageSlug"]
-         put "livecode.world" into postArray ["wikiDomain"]
-      end if
+      put fedwiki_GetDroppedArray() into postArray
       put postArray ["pageSlug"] into templateSlug
       put postArray ["wikiDomain"] into templateDomain
       
-      put fedwiki_FetchPageArray (templateDomain, templateSlug) into pageArray
-      put fedwiki_ConstructPagefoldRoster (pageArray) into rosterText
+      put pageArray_Fetch (templateDomain, templateSlug) into pageArray
+      put roster_PagefoldConstruct (pageArray) into rosterText
       --
       put "An automatically created roster. Created by [[Roster Maker]]." into pageDescription
       put fedwiki_CreateMarkdownPageArray ("Categorised Roster", pageDescription) into pageArray
-      fedwiki_AddRosterToPageArray pageArray, rosterText
+      pageArray_AddRoster pageArray, rosterText
       --
       fedwiki_ReturnPageArray pageArray   
    end cat
    
    on refs
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-      else
-         put "livecode.world" into postArray ["domainFilter"]
-         put "livecode-site-refs" into postArray ["pageSlug"]
-         put "livecode.world" into postArray ["wikiDomain"]
-      end if
-      
+      put fedwiki_GetDroppedArray() into postArray
+      --
       put postArray ["domainFilter"] into domainFilter
       put postArray ["pageSlug"] into templateSlug
       put postArray ["wikiDomain"] into templateDomain
       --
       put atopia_FetchRoster (domainFilter) into rosterDomains
-      put fedwiki_TidyRefPageRoster (templateDomain, templateSlug, rosterDomains) into fromPageArray
+      put roster_TidyPageFoldMaker (templateDomain, templateSlug, rosterDomains) into fromPageArray
       --
       fedwiki_ReturnPageArray fromPageArray   
    end refs
    
-   on subdomain
+   on list
+      -- was "subdomain"
       put fedwiki_GetDroppedArray() into postArray
-      put postArray ["itemID"] into itemID
-      put postArray ["domainFilter"] into domainFilter
-      put postArray ["pageSlug"] into templateSlug
-      put postArray ["wikiDomain"] into templateDomain
-      put postArray ["outputType"] into outputType
+      _DeconstructPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
       
       switch outputType
          case "top"
@@ -125,100 +119,145 @@
             put atopia_FetchRoster (domainFilter) into wikiDomains
       end switch
       --
-      put fedwiki_ConstructMarkdownIndex (wikiDomains) into markdownIndex
-      put fedwiki_FetchPageArray (templateDomain, templateSlug) into pageArray
-      fedwiki_SetStoryItemText pageArray, itemID, markdownIndex
-      fedwiki_StripJournalToCreate pageArray
+      url_SortDomainIndex wikiDomains
+      put fedwiki_MarkdownIndex (wikiDomains) into markdownIndex
+      put pageArray_Fetch (templateDomain, templateSlug) into pageArray
+      pageArray_SetItemText pageArray, itemID, markdownIndex
+      pageArray_StripJournal pageArray
+      pageArray_AddFork pageArray, "sites.fedwiki.org"
       --
       fedwiki_ReturnPageArray pageArray   
-   end subdomain
+   end list
    
    on visible_merge
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-      else
-         put _ConstructPostArray ("741a0fcdd3ff76b2", empty, "visible-federation", "sites.fedwiki.org") into postArray
-      end if
-      _DeconstractPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum
-      
-      put fedray_FetchTopFederationDomains() into rosterDomainText
-      put fedwiki_UpdateRosterPageArray (templateDomain, templateSlug, itemID, rosterDomainText) into pageArray
+      put fedwiki_GetDroppedArray() into postArray
+      _DeconstructPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
+      --
+      put federation_FetchRootDomains() into rosterDomainText
+      put roster_FetchAndUpdate (templateDomain, templateSlug, itemID, rosterDomainText) into pageArray
       --
       fedwiki_ReturnPageArray pageArray   
    end visible_merge
    
+   on mayfly
+      
+   end mayfly
+   
    on federation
-      -- fetch all federation domains from wards scrape
-      put fedray_FetchTopFederationDomains() into topFederationDomains
-      return topFederationDomains
+      put federation_FetchRootDomains() into rootDomains
+      return rootDomains
    end federation
    
    on atopia_merge_top
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-      else
-         put _ConstructPostArray ("741a0fcdd3ff76b2", "livecode.world", "roster-maker", "transport.fedwiki.org") into postArray
-      end if
-      _DeconstractPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum
-      put fedwiki_FetchPageArray (templateDomain, templateSlug) into pageArray
+      put fedwiki_GetDroppedArray() into postArray
+      _DeconstructPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
       --
-      put atopia_FetchTopDomains() into atopiaDomains
-      put fedwiki_ConstructMarkdownIndex (atopiaDomains) into markdownIndex
-      fedwiki_SetStoryItemText pageArray, itemID, markdownIndex
-      fedwiki_StripJournalToCreate pageArray
+      put pageArray_Fetch (templateDomain, templateSlug) into pageArray
+      --
+      put atopia_FetchRoster() into atopiaDomains
+      put roster_GetTop (atopiaDomains) into atopiaDomains
+      
+      put fedwiki_MarkdownIndex (atopiaDomains) into markdownIndex
+      pageArray_SetItemText pageArray, itemID, markdownIndex
+      pageArray_CleanJournal pageArray
       --
       fedwiki_ReturnPageArray pageArray   
    end atopia_merge_top
    
-   on atopia_merge
+   on update 
       -- update a roster
-      put fedwiki_GetDroppedArray (postArray) into postArray
-      _DeconstractPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum
-      put atopia_FetchRosterDomains (domainFilter) into domainNames
-      --
-      put fedwiki_UpdateRosterPageArray (templateDomain, templateSlug, itemID, domainNames) into pageArray
-      --
-      fedwiki_ReturnPageArray pageArray   
-   end atopia_merge
-   
-   on domain topDomain
-      -- roster can't use these url's :(
-      if the environment = "server" then
-         put rigFetchSegment(3, "") into topDomain
+      put fedwiki_GetDroppedArray () into postArray
+      _DeconstructPostArray postArray, itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
+      if domainFilter = "top" then
+         put atopia_FetchRoster() into domainNames
+         put url_ListTopDomains (domainNames) into domainNames
       else
-         put "" into topDomain
+         put atopia_FetchRoster (domainFilter, false) into domainNames
       end if
       --
+      put pageArray_Fetch (templateDomain, templateSlug) into pageArray
+      if pageArray is empty then
+         put merge ("Could not find page '[[templateSlug]]' of wiki '[[templateDomain]]'.") into someText
+         put pageArray_Construct ("Missing Page!", someText) into pageArray
+         fedwiki_ReturnPageArray pageArray
+         exit to top
+      end if
+      
+      put fedwiki_ConstructTitle (templateSlug) into pageTitle
+      put pageTitle & CR & CR & domainNames into rosterText
+      --
+      if itemID is empty then
+         put pageArray_FindItemType ("roster", pageArray) into itemNum
+         put rosterText into pageArray ["story"][itemNum]["text"]
+      else
+         pageArray_SetItemText pageArray, itemID, rosterText
+      end if
+      --
+      pageArray_StripJournal pageArray
+      fedwiki_ReturnPageArray pageArray   
+   end update
+   
+   on domain topDomain
+      put rigFetchSegment(3, "") into topDomain
+      --
       put atopia_FetchRoster (topDomain) into rosterText
-      put fedwiki_ConstructRosterPageArray (rosterText) into pageArray
+      put roster_ConstructPageArray (rosterText) into pageArray
       fedwiki_ReturnPageArray pageArray
    end domain
    
    on activity wikiDomain
       -- used by form for creating a roster-page
-      if the environment = "server" then
-         put fedwiki_GetDroppedArray() into postArray
-         put postArray ["wikiDomain"] into wikiDomain
-      end if
-      put fedwiki_CreateRosterPageArray (wikiDomain) into pageArray
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["wikiDomain"] into wikiDomain
+      put _CreateActivityPage (wikiDomain) into pageArray
       fedwiki_ReturnPageArray pageArray
    end activity
    
-   private function _ConstructPostArray itemID, domainFilter, pageSlug, wikiDomain, minPageNum
-      put itemID into postArray ["itemID"]
-      put domainFilter into postArray ["domainFilter"]
-      put pageSlug into postArray ["pageSlug"]
-      put wikiDomain into postArray ["wikiDomain"]
-      put minPageNum into postArray ["minPageNum"]
-      return postArray
-   end _ConstructPostArray
+   function roster_FetchAndUpdate wikiDomain, pageSlug, itemID, rosterDomainText
+      
+      return pageArray
+   end roster_FetchAndUpdate
    
-   private command _DeconstractPostArray postArray, @itemID, @domainFilter, @pageSlug, @wikiDomain, @minPageNum
+   private command _DeconstructPostArray postArray, @itemID, @domainFilter, @pageSlug, @wikiDomain, @minPageNum, @outputType
       put postArray ["itemID"] into itemID
       put postArray ["domainFilter"] into domainFilter
       put postArray ["pageSlug"] into pageSlug
       put postArray ["wikiDomain"] into wikiDomain
       put postArray ["minPageNum"] into minPageNum
-   end _DeconstractPostArray
+      put postArray ["outputType"] into outputType
+   end _DeconstructPostArray
+   
+   private function _CreateActivityPage wikiDomain
+      -- used by "activity" (nothing else yet)
+      
+      set the itemdelimiter to "."
+      put text_InitialCaps (item 1 of wikiDomain) into rosterTitle
+      
+      -- put federation_FetchMyRecentOther (false) into domainNames
+      -- put federation_FetchMyRecentOther (true) into rosterDomains
+      put atopia_FetchRoster (wikiDomain, false) into domainNames
+      
+      put atopia_FetchRoster (pFilterDomain, false) into domainNames
+      put fedwiki_MarkdownIndex (rosterDomains) into markdownIndex
+      
+      put rosterTitle into curlyArray ["rosterTitle"]
+      put wikiDomain into curlyArray ["wikiDomain"]
+      put rosterDomains into curlyArray ["rosterText"]
+      put markdownIndex into curlyArray ["rosterIndex"]
+      --
+      -- put pageArray_FetchTemplate ("roster.fedwiki.org", "roster-template", curlyArray) into pageArray
+      put pageSlug into curlyArray ["Page Slug"]
+      put fedwikiDomain into curlyArray ["Wiki Domain"]
+      put fedwiki_ConstructTitle (pageSlug) into curlyArray ["Page Title"]
+      put pageArray_Fetch ("roster.fedwiki.org", "roster-template") into pageArray
+      --
+      put curlyArray into curlyData ["all"]
+      curly_MergeAll pageArray, curlyData
+      --
+      put rosterTitle && "Activity" into pageTitle
+      put pageTitle into pageArray ["title"]
+      --
+      return pageArray
+   end _CreateActivityPage
 
 ?>

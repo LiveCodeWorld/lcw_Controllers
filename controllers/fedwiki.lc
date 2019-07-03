@@ -2,7 +2,7 @@
    /* =  DESCRIPTION  =
    --
    The fedwiki.lc controller can be found at: fedwiki.lc
-   Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,journal,fork_Cleaner,clean_FirstLetter,compact_Refs,clean_Title,fix_Title,fedwiki" into gControllerHandlers
+   put "index,journal,fix_Title,addFedwiki,clean_Title,clean_FirstLetter,compact_Refs,fork_Cleaner,fedwiki" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -26,6 +26,8 @@
    command fedwiki
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end fedwiki
    
 
@@ -36,47 +38,50 @@
    */
    
    on index
-      -- fetch fedwiki.org domains
-      put atopia_FetchStoredDomains ("fedwiki.org") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put atopia_FetchRoster ("fedwiki.org") into wikiDomains
+      put roster_ConstructPageArray (wikiDomains) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
    
    on compact_Refs
-      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      if fedwiki_IsHtmlUrl (droppedURL, errorMsg) is false then
-         put merge ("The dropped url [[droppedURL]] is not a [[Fedwiki HTML url]]. Use the link at the bottom of the page") into errorText
-         fedwiki_ExitAndReturnError errorText, "Not a Fedwiki HTML URL"
-      end if
-      --
-      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain, droppedURL
-      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
-      fedwiki_CompactPageArrayRefs pageArray
-      --
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+      pageArray_CompactRefs pageArray
       fedwiki_ReturnPageArray pageArray
    end compact_Refs
    
-   on fork_Cleaner
-      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
-      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
-      --
-      fedwiki_CleanJournalArray pageArray, "create,fork"
-      --
-      fedwiki_ReturnPageArray pageArray
-   end fork_Cleaner
-   
    on journal
       fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
-      put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
-      --
-      fedwiki_CleanJournalArray pageArray
-      --
+      put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+      pageArray_StripJournal pageArray
       fedwiki_ReturnPageArray pageArray
    end journal
    
+   on fork_Cleaner
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+      pageArray_CleanJournal pageArray, "create,fork"
+      fedwiki_ReturnPageArray pageArray
+   end fork_Cleaner
+   
+   on addFedwiki
+      put "fedwiki.org" into forkDomains
+      repeat for each item pNum in "3,4,5,6"
+         put rigFetchSegment(pNum, "") into extraDomain
+         if extraDomain is not false then put comma & extraDomain after forkDomains
+      end repeat
+      --
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+      pageArray_StripJournal pageArray
+      pageArray_AddFork pageArray, forkDomains
+      fedwiki_ReturnPageArray pageArray
+   end addFedwiki
+   
    on clean_Title
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put fedwiki_FetchPageArray (droppedURL) into pageArray
+      put pageArray_Fetch (droppedURL) into pageArray
       --
       put pageArray ["Title"] into pageTitle
       -- put toUpper (char 1 of pageTitle) into char 1 of pageTitle
@@ -89,7 +94,7 @@
    
    on fix_Title
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put fedwiki_FetchPageArray (droppedURL) into pageArray
+      put pageArray_Fetch (droppedURL) into pageArray
       if pageArray is false then
          put merge ("The dropped url [[droppedURL]] is not a Fedwiki url.") into errorText
          fedwiki_ExitAndReturnError errorText, "Not a Fedwiki URL"
@@ -107,7 +112,7 @@
    
    on clean_FirstLetter
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-      put fedwiki_FetchPageArray (droppedURL) into pageArray
+      put pageArray_Fetch (droppedURL) into pageArray
       --
       put pageArray ["Title"] into pageTitle
       put toUpper (char 1 of pageTitle) into char 1 of pageTitle

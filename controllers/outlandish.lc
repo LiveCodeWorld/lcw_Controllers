@@ -25,7 +25,10 @@
 
    command outlandish
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
    end outlandish
    
 
@@ -36,8 +39,8 @@
    */
    
    on index
-      put atopia_FetchStoredDomains ("outlandish.academy") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      put atopia_FetchRoster ("outlandish.academy") into refTable
+      put roster_ConstructPageArray (refTable) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

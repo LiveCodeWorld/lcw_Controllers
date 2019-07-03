@@ -1,6 +1,6 @@
 ﻿script "bbc.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_HTML,lib_Scrape,lib_Podcast,model_Secret"
+   return "lib_Fedwiki,lib_HTML,lib_PageArray,lib_Podcast,lib_Scrape,model_Secret"
 end dep_StackNames
 
 on index
@@ -30,7 +30,6 @@ on index
             delete char -5 to -1 of droppedURL
          end if
          -- put "https://www.bbc.co.uk/programmes/b04p7yg3" into droppedURL
-         -- _SetDroppedHtml someHTML, droppedURL -- tidy can't work with it any more
          put url droppedURL into someHTML 
          put bbc_FetchPodcastPageArray (someHtml, droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
@@ -83,9 +82,7 @@ on test
 end test
 
 on listenMore
-   -- fedwiki_ForwardAndReturn "https://rest.livecode.world/echo"
-   
-   put fedwiki_GetDroppedArray() into postArray
+    put fedwiki_GetDroppedArray() into postArray
    --
    put postArray ["search_Term"] into googleQuery
    put postArray ["search_Offset"] into cseOffset
@@ -108,20 +105,7 @@ on radioLab
 end radioLab
 
 on playerfm
-   -- fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc/playerfm"
-   /*
-   -- https://player.fm/series/under-the-skin-with-russell-brand/015-yanis-varoufakis-how-to-construct-a-global-revolution
-   -- /html/body/div[2]/div[4]/div/div/div[2]/div/div/div/div[2]/div[2]/div[2]/a
-   put playerfm_FetchPodcastPageArray (someHTML) into pageArray
-   
-   put playerfm_ConvertURL (droppedURL) into jsonURL
-   -- put playerfm_FetchArray (droppedURL) into someArray
-   -- put keys(someArray) into someText
-   put url jsonURL into someJSON
-   fedwiki_ExitAndReturnError someJSON, "Error"
-   */
-   
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put fedwiki_GetDroppedUrl () into droppedURL
    put playerfm_FetchArray (droppedURL) into playerfmArray
    put playerfm_ConstructPageArray (playerfmArray) into pageArray
    fedwiki_ReturnPageArray pageArray

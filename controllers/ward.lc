@@ -25,7 +25,9 @@
 
    command ward
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_AtopiaFetch.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
    end ward
    
@@ -37,8 +39,8 @@
    */
    
    on index
-      put federation_FetchDomains ("fed.wiki") into refTable
-      put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+      put federation_FetchAuthorDomains ("Ward Cunningham") into domainNames
+      put roster_ConstructPageArray (domainNames) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

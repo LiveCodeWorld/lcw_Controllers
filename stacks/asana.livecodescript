@@ -1,6 +1,6 @@
-﻿script "asana.lc" with behavior "behavior_RigLocalOveride"
+﻿script "asana.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_Asana,model_Secret,lib_REST"
+    return "lib_Fedwiki,lib_Asana,model_Secret,lib_REST,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
@@ -21,6 +21,7 @@ on index
    end if
    
    switch
+      case taskID = "board"
       case taskID = "list"
          put asana_FetchProjectPageArray (projectID) into fedwikiPageArray
          fedwiki_ReturnPageArray fedwikiPageArray

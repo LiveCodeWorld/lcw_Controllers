@@ -1,8 +1,8 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The crypto.lc controller can be found at: crypto.lc
-   Here is some test help
+   The proto.lc controller can be found at: proto.lc
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,crypto" into gControllerHandlers
+   put "proto" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -19,15 +19,13 @@
    into the global array "gData".
 
    Write any initialisation statements (loading any neeeded libraries for instance)
-   into the initialisation handler "crypto.lc" below.
+   into the initialisation handler "proto.lc" below.
    --
    */
 
-   command crypto
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-   end crypto
+   command proto
+
+   end proto
    
 
    /* ==  CODE  ==
@@ -37,9 +35,13 @@
    */
    
    on index
-      put atopia_FetchRoster ("cryptoacademy.org") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
-      fedwiki_ReturnPageArray pageArray
-   end index
+   -- put "Hello" into testArray ["World"]
+   -- put json_FromArray (testArray) into someJSON
+   -- put $_SERVER ["DOCUMENT_ROOT"] into documentRoot
+ 
+   -- put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+   put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
+   fedwiki_ReturnJSON someJSON
+end index
 
 ?>

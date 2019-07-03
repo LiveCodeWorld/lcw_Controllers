@@ -1,12 +1,24 @@
 ﻿script "imagine.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_MediaWiki,lib_FedWikiPedia,lib_HTML,lib_Scrape,lib_REST,lib_Citation"
+    return "lib_Fedwiki,lib_PageArray"
 end dep_StackNames
 
 on index
+   fedwiki_SetRawJSON dropJSON
    put fedwiki_GetDroppedUrl() into droppedURL
    set the itemdelimiter to "."
    switch
+      case fedwiki_IsFaviconDrop (dropJSON)
+      case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
+      case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
+      case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
+      case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
+      case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.webm)", shortVideoFile)
+      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
+      case matchText (droppedURL, "https://(.+).wikipedia.org/(.+)", lastBit)
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/mediawiki"
+         break
       case droppedURL begins with "https://www.listennotes.com/podcasts/"
          fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc/listenNotes"
          break
@@ -45,21 +57,10 @@ on index
       case matchText (droppedURL, "https://www.one-tab.com/page/(.+)", oneTabID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/onetab"
          break
-      case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
-      case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
-      case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
-      case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
-      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.webm)", shortVideoFile)
-      case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
-      -- case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
-      case matchText (droppedURL, "https://(.+).wikipedia.org/(.+)", lastBit)
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/mediawiki"
-         break
       case matchtext (droppedURL, "https://matrix.org/_matrix/media/v1/download/matrix.org/(.+)", matrixAssetID)
       case matchText (droppedURL, "http://britishlibrary.typepad.co.uk/.a/(.+)", assetID)
       case matchText (droppedURL, "https://static.+.squarespace.com/static/.+", photoID)
          fedwiki_ForwardAndReturn "http://home.c2.com:4010/image"
-         -- photo droppedURL
          break
       case matchText (droppedURL, "https://www.pinterest.com/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/pinterest"
@@ -67,64 +68,17 @@ on index
       case matchText (droppedURL, "https://www.flickr.com/photos/(.+)/(.+)/in/.+", userID, photoID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/flickr"
          break
+      case item -1 of droppedURL is among the items of "jpg.jpeg.png.gif.webp.svg"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/photo"
+         break
       case matchText (droppedURL, "https://twitter.com/.+/status/.+")
          fedwiki_ForwardAndReturn "https://rest.livecode.world/twitter"
          break
       case droppedURL begins with "https://www.google.com/imgres?imgurl="
       case droppedURL begins with "https://www.google.co.uk/imgres?imgurl="
-         googleImage
-         break
-      case fedwiki_IsFaviconDrop()
-         favicon
-         break
-      case item -1 of droppedURL is among the items of "jpg.jpeg.png.gif.webp.svg"
-         photo
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/google"
          break
       default
-         put scrape_ConstructFedwikiPageArray (droppedURL, true, true, true) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/scrape"
    end switch
 end index
-
-command favicon
-   -- already checked with "fedwiki_IsFaviconDrop"
-   fedwiki_SetDroppedFaviconInfo pageSlug, fedwikiDomain
-   if the result is true then
-      put fedwiki_GetDroppedUrl() into droppedURL
-      put pageSlug into postArray ["text"]
-      put droppedURL into postArray ["url"]
-      put empty into postArray ["html"]
-      put json_FromArray (postArray) into postJSON
-      --
-      fedwiki_PostJSON postJSON, "https://rest.livecode.world/mediawiki/search"
-      --
-      put the result into pageJSON
-      fedwiki_ReturnJSON pageJSON
-   else
-      put "The web page for url" && droppedURL && "is not one that I can parse." & CR & CR & $_POST_RAW into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-      fedwiki_ReturnJSON someJSON
-   end if
-end favicon
-
-on photo
-   put fedwiki_GetDroppedUrl() into droppedURL
-   --
-   put droppedURL into imageURL
-   put imageURL into captionLinkURL
-   --
-   put "Dropped Image" into pageTitle
-   put "This is a simple image dropped on to a wiki." into pageText
-   put empty into imageCaption
-   --
-   put fedwiki_ConstructNewPageArray (pageTitle, pageText) into pageArray
-   fedwiki_AddImageToPageArray pageArray, imageURL, imageCaption, captionLinkURL
-   --
-   fedwiki_ReturnPageArray pageArray
-end photo
-
-command googleImage
-   put fedwiki_GetDroppedUrl() into googleURL
-   put google_ConstructFedwikiImagePageArray (googleURL) into fedwikiPageArray
-   fedwiki_ReturnPageArray fedwikiPageArray
-end googleImage

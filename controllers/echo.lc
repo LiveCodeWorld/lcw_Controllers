@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "server,index,form,myip,postraw,echo" into gControllerHandlers
+   put "postraw,myip,server,index,form,echo" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,7 +25,7 @@
 
    command echo
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
    end echo
    
 
@@ -36,18 +36,10 @@
    */
    
    on index
-      put _ConstructTestPageArray ("Echo") into pageArray
+      put _ConstructTestText() into someMarkdown
+      put pageArray_Construct ("Echo", someMarkdown) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
-   
-   function _ConstructTestPageArray pageTitle
-      put pageTitle into pageArray ["title"]
-      put fedwiki_ConstructJournalArray (pageTitle) into pageArray ["journal"]
-      put _ConstructTestText() into someMarkdown
-      fedwiki_AddMarkdownToPageArray pageArray, someMarkdown
-      --
-      return pageArray
-   end _ConstructTestPageArray
    
    function _ConstructTestText
       local someText

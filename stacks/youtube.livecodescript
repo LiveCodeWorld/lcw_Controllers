@@ -1,6 +1,6 @@
 ﻿script "youtube.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_Youtube,lib_Scrape"
+   return "lib_Fedwiki,lib_PageArray,lib_Youtube,lib_Vimeo,lib_Scrape,model_Secret"
 end dep_StackNames
 
 on index

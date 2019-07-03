@@ -1,10 +1,11 @@
 ﻿script "ward.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_AtopiaFetch"
+    return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster"
 end dep_StackNames
 
 on index
-   put federation_FetchDomains ("fed.wiki") into refTable
-   put fedwiki_ConstructRosterPageArray (refTable) into pageArray
+   put federation_FetchAuthorDomains ("Ward Cunningham") into domainNames
+   put roster_ConstructPageArray (domainNames) into pageArray
+   put pageArray_Construct (pageTitle, pSomeText, pSourceArray)
    fedwiki_ReturnPageArray pageArray
 end index

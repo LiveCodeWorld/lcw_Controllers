@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "html,index,markdown,htmlParagraphs,onetab" into gControllerHandlers
+   put "index,html,markdown,htmlParagraphs,onetab" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -26,6 +26,9 @@
    command onetab
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_Scrape.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Citation.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_REST.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_HTML.livecode")
    end onetab
    
 

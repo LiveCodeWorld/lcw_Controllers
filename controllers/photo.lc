@@ -1,7 +1,7 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The crypto.lc controller can be found at: crypto.lc
+   The photo.lc controller can be found at: photo.lc
    Here is some test help
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,crypto" into gControllerHandlers
+   put "index,photo" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -19,15 +19,14 @@
    into the global array "gData".
 
    Write any initialisation statements (loading any neeeded libraries for instance)
-   into the initialisation handler "crypto.lc" below.
+   into the initialisation handler "photo.lc" below.
    --
    */
 
-   command crypto
+   command photo
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-   end crypto
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+   end photo
    
 
    /* ==  CODE  ==
@@ -37,8 +36,18 @@
    */
    
    on index
-      put atopia_FetchRoster ("cryptoacademy.org") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
+      put fedwiki_GetDroppedUrl() into droppedURL
+      --
+      put droppedURL into imageURL
+      put imageURL into captionLinkURL
+      --
+      put "Dropped Image" into pageTitle
+      put "This is a simple image dropped on to a wiki." into pageText
+      put empty into imageCaption
+      --
+      put fedwiki_ConstructNewPageArray (pageTitle, pageText) into pageArray
+      fedwiki_AddImageToPageArray pageArray, imageURL, imageCaption, captionLinkURL
+      --
       fedwiki_ReturnPageArray pageArray
    end index
 
