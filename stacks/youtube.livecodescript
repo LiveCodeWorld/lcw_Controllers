@@ -1,11 +1,21 @@
 ﻿script "youtube.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,lib_Youtube,lib_Vimeo,lib_Scrape,model_Secret"
+   return "lib_Fedwiki,lib_PageArray,lib_Scrape,lib_Vimeo,lib_Youtube,model_PageArray"
 end dep_StackNames
 
 on index
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   set the itemdelimiter to "."
    switch
+      case item -1 of droppedURL is among the items of "mp4.webm"
+         put "HTML5" && item -1 of droppedURL into videoType
+         set the itemdelimiter to slash
+         put item 3 of droppedURL into kWord
+         replace "www." with empty in kWord
+         put "Imported video" && "- [" & droppedURL && kWord & "]" into videoDescription
+         pageArray_AddVideo pageArray, droppedURL, videoType, videoDescription
+         fedwiki_ReturnPageArray pageArray
+         break
       case droppedURL begins with "https://www.youtube.com/"
          put youtube_ParseDropUrl (droppedURL) into pageJSON
          fedwiki_ReturnJSON pageJSON
@@ -19,6 +29,8 @@ on index
          fedwiki_ReturnPageArray fedwikiPageArray
          break
       default
+         put pageArray_Construct ("Error", "The url was not a video url that i recognise!") into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end index
 
@@ -30,8 +42,8 @@ on vimeo
       fedwiki_ReturnPageArray fedwikiPageArray
    else
       put "This is not a Vimeo video. URL =" && droppedURL into errorText
-      put fedwiki_ConstructErrorJSON (errorText, "Error") into errorJSON
-      fedwiki_ReturnJSON errorJSON
+      put pageArray_Construct ("Error", errorText) into pageArray
+      fedwiki_ReturnPageArray pageArray
    end if
 end vimeo
 
@@ -44,8 +56,8 @@ on transport_Video
       case linkURL is empty
          put "This is not a youtube video." into errorText
          put CR & CR & $_POST_RAW after errorText
-         put fedwiki_ConstructErrorJSON (errorText, "Error: linkURL is empty") into errorJSON
-         fedwiki_ReturnJSON errorJSON
+         put pageArray_Construct ("Error: linkURL is empty", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
          break
       case matchText (linkURL, "https\://www\.youtube\.com/watch\?v\=(.+)", videoID)
          -- "https://www.youtube.com/watch?v="
@@ -63,77 +75,53 @@ on transport_Video
          break
       default
          put "This is not a youtube video. LinkURL =" && linkURL into errorText
-         put fedwiki_ConstructErrorJSON (errorText, "Error") into errorJSON
-         fedwiki_ReturnJSON errorJSON
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end transport_Video
-   
-on transportAgain
-   put $_POST_RAW into someJSON
-   
-   put json_ToArray (someJSON) into createArray
-   put createArray ["title"] into sectionTitle
-   put createArray ["create"]["source"] into sourceArray
-   -- put createArray ["create"]["item"]["title"] into parentTitle
-   if sourceArray is not an array then
-      put fedwiki_ConstructErrorJSON ("This is not create JSON", "Error") into errorJSON
-      fedwiki_ReturnJSON errorJSON
-      return false
-   end if
-   
-   put sourceArray ["transport"] into transportURL
-   put sourceArray ["link_dictionary"] into linkDictionary
-   
-   put linkDictionary [sectionTitle] into snippetArray
-   deconstruct_VideoSnippetArray snippetArray, videoTitle, videoDescription, videoID, thumbNailURL, publishedAt, positionPlusOneNum, tagArray, thumbNailWidth
-   
-   -- put "OrH6UMYAVsk" into videoID
-   put youtube_FetchVideoPageJSON (videoID) into pageJSON
-   fedwiki_ReturnJSON pageJSON
-end transportAgain
-    
+
 on fetchThumb
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ParseThumbUrl (droppedURL) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end fetchThumb
-    
+
 on fetchAll
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ParseAllDropUrl (droppedURL) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end fetchAll
-    
+
 on recentMarkdown
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst", true, true) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end recentMarkdown
-    
+
 on oldestFirst
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "oldestFirst") into pageJSON
    fedwiki_ReturnJSON pageJSON
 end oldestFirst
-    
+
 on recentFirst
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst") into pageJSON
    fedwiki_ReturnJSON pageJSON
 end recentFirst
-    
+
 on oldestBullets
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "oldestFirst", false) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end oldestBullets
-    
+
 on recentBullets
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst", false) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end recentBullets
- 
+
 function youtube_ParseDropUrl droppedURL
    set the itemdelimiter to "/"
    put item 3 of droppedURL into youtubeBit
@@ -141,9 +129,9 @@ function youtube_ParseDropUrl droppedURL
    put item 5 of droppedURL into extraBit
    
    if youtubeBit is not "www.youtube.com" then
-      put "Not a link that I can parse:" && droppedURL into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-      return pageJSON
+      put "Not a link that I can parse:" && droppedURL into errorText
+      put pageArray_Construct ("Error", errorText) into pageArray
+      fedwiki_ReturnPageArray pageArray
    end if
    
    put 10 into pMaxResults
@@ -180,32 +168,11 @@ function youtube_ParseDropUrl droppedURL
          put youtube_FetchUserUploadPageJson (userName, pMaxResults, pDontLinkTitle) into someJSON
          return someJSON
       default
-         put "Not a link that I can parse." & CR & CR & dropJSON into someInfo
-         put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-         return someJSON
+         put "Not a link that I can parse." & CR & CR & dropJSON into errorText
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end youtube_ParseDropUrl
-
-/*
-function youtube_FetchNextPageJson droppedURL, droppedHtml
-   put fedwiki_FetchMetadataArray (droppedURL) into metadataArray
-   put metadataArray ["pageTitle"] into pageTitle
-   put metadataArray ["author"] into transporterName
-   put metadataArray ["nextPageToken"] into nextPageToken
-   
-   if nextPageToken is empty then
-      put "Not a link that I can parse:" && droppedURL & CR & CR & droppedHtml into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-   else -- dropped a Fedwiki page which has a nextPageToken
-      put 10 into pMaxResults
-      put true into pDontLinkTitle
-      put wcn_GetChannelID() into channelID
-      
-      put youtube_FetchChannelUploadPageJson (channelID, pMaxResults, pDontLinkTitle, nextPageToken) into someJSON
-   end if
-   return someJSON
-end youtube_FetchNextPageJson
-*/
 
 function youtube_ListAllDropUrl droppedURL, pDirection, pNumbered
    put false into pDontLinkTitle
@@ -219,9 +186,9 @@ function youtube_ListAllDropUrl droppedURL, pDirection, pNumbered
    put item 1 of switchOrArray into switchBit
    switch switchBit
       case "user"
-         put "Not done users yet for indexes" & CR & CR & dropJSON into someInfo
-         put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-         return someJSON
+         put "Not done users yet for indexes" & CR & CR & dropJSON into errorText
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
       case "channel"
          put extraBit into channelID
          put youtube_FetchChannelIndexPageJson (channelID) into pageJSON
@@ -235,12 +202,12 @@ function youtube_ListAllDropUrl droppedURL, pDirection, pNumbered
          put youtube_FetchPlayListIndexPageJson  (playlistID, pPageTitle, pDirection, pNumbered, droppedURL) into pageJSON
          return pageJSON
       default
-         put "Not a link that I can parse." & CR & CR & dropJSON into someInfo
-         put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-         return someJSON
+         put "Not a link that I can parse." & CR & CR & dropJSON into errorText
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end youtube_ListAllDropUrl
- 
+
 function youtube_ParseAllDropUrl droppedURL
    put false into pDontLinkTitle
    
@@ -277,12 +244,12 @@ function youtube_ParseAllDropUrl droppedURL
          put youtube_FetchVideoPageJSON (videoID) into someJSON
          return someJSON
       default
-         put "Not a link that I can parse." & CR & CR & dropJSON into someInfo
-         put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-         return someJSON
+         put "Not a link that I can parse." & CR & CR & dropJSON into errorText
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end youtube_ParseAllDropUrl
- 
+
 function youtube_ParseThumbUrl droppedURL
    set the itemdelimiter to "/"
    put item 3 of droppedURL into youtubeBit
@@ -314,9 +281,9 @@ function youtube_ParseThumbUrl droppedURL
          put youtube_FetchVideoThumbPageJSON (videoID) into someJSON
          return someJSON
       default
-         put "Not a link that I can parse." & CR & CR & dropJSON into someInfo
-         put fedwiki_ConstructErrorJSON (someInfo) into someJSON
-         return someJSON
+         put "Not a link that I can parse." & CR & CR & dropJSON into errorText
+         put pageArray_Construct ("Error", errorText) into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end youtube_ParseThumbUrl
 

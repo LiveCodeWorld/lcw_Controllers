@@ -1,35 +1,64 @@
-﻿script "echo.lc" with behavior "behavior_RigLocalOveride"
+﻿script "echo.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_FedwikiCreate"
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
-   put _ConstructTestPageArray ("Echo") into pageArray
+   put _ConstructTestText() into someMarkdown
+   -- put fedray_FetchDomains ("voz.money") into rosterDomains
+   
+   put $_SERVER into tServerArray
+   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
+   -- combine tServerArray using CR and space -- makes a list for presenting
+   
+   put "# PATH_TRANSLATED" & CR after someMarkdown
+   -- PATH_TRANSLATED /var/www/rest.livecode.world/index.lc
+   put pathTranslated & CR after someMarkdown
+   
+   put "# HTTP_REFERER" & CR after someMarkdown
+   put $HTTP_REFERER & CR after someMarkdown
+   
+   put cgi_TextPath ("hello.txt") into filePath
+   put url ("file:" & filePath) into someText
+   
+   put CR & "# Hello World" after someMarkdown
+   put someText & CR after someMarkdown
+   
+   -- now write to database
+   put "Hello world!" && the ticks into url ("file:" & textPath)
+   
+   -- put keys (tServerArray) & CR after someMarkdown
+   -- put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
+   --
+   put pageArray_Construct ("Echo", someMarkdown) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index
 
-function _ConstructTestPageArray pageTitle
-   put pageTitle into pageArray ["title"]
-   put fedwiki_ConstructJournalArray (pageTitle) into pageArray ["journal"]
-   put _ConstructTestText() into someMarkdown
-   fedwiki_AddMarkdownToPageArray pageArray, someMarkdown
+function cgi_TextPath shortFile
+   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
    --
-   return pageArray
-end _ConstructTestPageArray
+   set the itemdelimiter to slash
+   put pathTranslated into textPath
+   put shortFile into item -1 of textPath
+   --
+   return textPath
+end cgi_TextPath
 
 function _ConstructTestText
    local someText
    
    put "# Dropped URL fedwiki_GetDroppedUrl()" & CR after someText
    --
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put fedwiki_GetDroppedUrl() into droppedURL
    put droppedURL & CR after someText
    -- 
    put CR after someText
    --
-   rigLoaderLoadLibrary "Useragent"
-   put rigBrowser() into tBrowser
-   put "__Browser:__" && tBrowser & CR after someText
+   if the platform is "server" then
+      rigLoaderLoadLibrary "Useragent"
+      put rigBrowser() into tBrowser
+      put "__Browser:__" && tBrowser & CR after someText
+   end if
    --
    put fedwiki_IsFaviconDrop() into isFavicon
    put "__Dropped favicon:__" && isFavicon & CR & CR after someText
@@ -58,6 +87,8 @@ function _ConstructTestText
 end _ConstructTestText
 
 function _MoreText
+   if the platform is not "server" then return empty
+   
    put rigUserAgent() into tUserAgent
    put rigVarCookie ("wikisession") into someCookie
    put rigVarGet() into getData
@@ -74,23 +105,9 @@ function _MoreText
    return someText
 end _MoreText
 
-on form
-   -- a test of using a wiki page as a form
-   put fedwiki_GetDroppedArray() into postArray
-   put postArray ["wikiDomain"] into wikiDomain
-   put postArray ["pageSlug"] into pageSlug
-   --
-   put fedwiki_FetchPageArray (wikiDomain, pageSlug) into pageArray
-   put pageArray ["title"] into pageTitle
-   put "Fetched from:" && pageTitle into someTitle
-   put fedwiki_FindFirstStoryItemText (pageArray) into itemText
-   --
-   -- put json_FromArray (dropArray) into itemText
-   put fedwiki_ConstructErrorJSON (itemText, someTitle) into someJSON
-   fedwiki_ReturnJSON someJSON
-end form
-
 on myip
+   if the platform is not "server" then return empty
+   --
    put rigIpAddress() after myIP
    put myIP
 end myip

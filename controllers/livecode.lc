@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The livecode.lc controller can be found at: livecode.lc
+   The livecode.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -24,11 +25,14 @@
    */
 
    command livecode
+      start using stack (gAPPPATH & "stacks/lib_Fedray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end livecode
    
 
@@ -39,9 +43,7 @@
    */
    
    on index
-      put atopia_FetchRoster ("livecode.world") into wikiDomains
-      put roster_ConstructPageArray (wikiDomains) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnAtopiaPageArray "livecode.world"
    end index
 
 ?>

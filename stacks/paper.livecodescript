@@ -1,11 +1,11 @@
 ﻿script "paper.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_RevIgniter,lib_FedwikiCreate,lib_DropBox,model_Secret"
+   return "lib_Fedwiki,lib_PageArray,lib_RevIgniter,lib_DropBox,model_Secret"
 end dep_StackNames
 
 on index
    -- https://paper.dropbox.com/doc/Writing-with-markdown--AUmjuiRGj1RLWCuvBHoOdxNFAg-Os7UBN3uhgSfPEdi0rqQf
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put fedwiki_GetDroppedUrl() into droppedURL
    switch
       case matchText (droppedURL, "https://paper.dropbox.com/doc/(.+)--([^-]+)-(.+)", docTitleBit, probUserID, docID)
          -- import_paper
@@ -150,6 +150,7 @@ command test
 end test
 
 function fedwiki_ConstructPageMarkdown pageTitle, storyArray
+   -- put fedwiki_ConstructMarkdownPage (someMarkdown, pPageTitle)
    put "#" && pageTitle & CR into pageMarkdown
    --
    repeat with itemNum = 1 to item 2 of the extents of storyArray

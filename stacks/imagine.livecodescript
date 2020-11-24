@@ -1,14 +1,20 @@
 ﻿script "imagine.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_PageArray"
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
    fedwiki_SetRawJSON dropJSON
    put fedwiki_GetDroppedUrl() into droppedURL
-   set the itemdelimiter to "."
+   put url_FileEnding (droppedURL) into qEnd
    switch
       case fedwiki_IsFaviconDrop (dropJSON)
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/flag"
+         break
+      case droppedURL begins with "https://www.listennotes.com/podcasts/"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/podcast"
+         break
+      case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
       case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
       case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
       case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
@@ -27,6 +33,7 @@ on index
          break
       case droppedURL begins with "http://www.radiolab.org/story/"
       case droppedURL begins with "http://www.bbc.co.uk/programmes/"
+      case droppedURL begins with "https://www.bbc.co.uk/programmes/"
       case droppedURL begins with "https://www.theguardian.com/science/audio/" -- plenty of other podcast urls
          fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc"
          break
@@ -39,6 +46,7 @@ on index
       case matchText (droppedURL, "https://app.asana.com/0/(.+)/(.+)", projectID, taskID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/asana"
          break
+      case qEnd is among the items of "mp4,webm"
       case droppedURL begins with "https://www.youtube.com/"
       case droppedURL begins with "https://vimeo.com/"
       case droppedURL begins with "https://www.ted.com/talks/"
@@ -68,7 +76,7 @@ on index
       case matchText (droppedURL, "https://www.flickr.com/photos/(.+)/(.+)/in/.+", userID, photoID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/flickr"
          break
-      case item -1 of droppedURL is among the items of "jpg.jpeg.png.gif.webp.svg"
+      case qEnd is among the items of "jpg,jpeg,png,gif,webp,svg"
          fedwiki_ForwardAndReturn "https://rest.livecode.world/photo"
          break
       case matchText (droppedURL, "https://twitter.com/.+/status/.+")

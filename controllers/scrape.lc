@@ -2,7 +2,7 @@
    /* =  DESCRIPTION  =
    --
    The scrape.lc controller can be found at: scrape.lc
-
+   Here is some test help
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +10,7 @@
    
    global gControllerHandlers, gData
    
-   put "scrape" into gControllerHandlers
+   put "index,scrape" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -24,7 +24,12 @@
    */
 
    command scrape
-
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Scrape.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_HTML.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Citation.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_REST.livecodescript")
    end scrape
    
 
@@ -35,13 +40,8 @@
    */
    
    on index
-   -- put "Hello" into testArray ["World"]
-   -- put json_FromArray (testArray) into someJSON
-   -- put $_SERVER ["DOCUMENT_ROOT"] into documentRoot
- 
-   -- put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
-   put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
-   fedwiki_ReturnJSON someJSON
-end index
+      put scrape_ConstructFedwikiPageArray (droppedURL, true, true, true) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end index
 
 ?>

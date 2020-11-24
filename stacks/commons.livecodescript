@@ -1,10 +1,8 @@
-﻿script "commons.lc" with behavior "behavior_RigLocalOveride"
+﻿script "commons.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster,lib_Federation"
+   return roster_DepStackNames()
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("commons.world") into refTable
-   put roster_ConstructPageArray (refTable) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   roster_ReturnPageArray "commons.world", true
 end index

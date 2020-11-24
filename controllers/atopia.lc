@@ -1,7 +1,8 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The atopia.lc controller can be found at: atopia.lc
+   The atopia.lc controller can be found at: echo.lc
+   Here is some test help
 
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
@@ -10,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,atopia" into gControllerHandlers
+   put "wikiFolders,list,index,atopia" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -27,8 +28,11 @@
       start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
       start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end atopia
    
@@ -40,9 +44,50 @@
    */
    
    on index
+      -- ,model_Atopia,model_Federation,model_Fedwiki
       put federation_FetchRecentAtopia() into atopiaDomains  
-      put roster_ConstructPageArray (atopiaDomains) into pageArray
+      put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
+      put roster_ConstructPageArray (rosterText) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
+   
+   on wikiFolders
+      -- put "thought.garden" into wikiDomain
+      put rigFetchSegment(3, "") into wikiDomain
+      put roster_FetchLive (wikiDomain) into wikiFolderIndex
+      if word 1 of wikiFolderIndex = "ssh" then
+         put empty
+      else
+         -- put atopia_FetchWikiFolders (wikiDomain) into wikiFolderIndex
+         url_SortDomainIndex wikiFolderIndex
+         put wikiFolderIndex
+      end if
+   end wikiFolders
+   
+   on list
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["outputType"] into outputType
+      --
+      put federation_FetchRecentAtopia () into wikiDomains
+      switch outputType
+         case "top"
+            put url_ListTopDomains (wikiDomains) into wikiDomains
+            break
+         default
+      end switch
+      url_SortDomainIndex wikiDomains
+      put fedwiki_MarkdownIndex (wikiDomains) into markdownIndex
+      --
+      put postArray ["pageSlug"] into templateSlug
+      put postArray ["wikiDomain"] into templateDomain
+      put postArray ["itemID"] into itemID
+      --
+      put pageArray_Fetch (templateDomain, templateSlug) into pageArray
+      pageArray_SetItemText pageArray, itemID, markdownIndex
+      pageArray_StripJournal pageArray
+      pageArray_AddFork pageArray, "sites.fedwiki.org"
+      --
+      fedwiki_ReturnPageArray pageArray   
+   end list
 
 ?>

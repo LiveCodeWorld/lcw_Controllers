@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The crypto.lc controller can be found at: crypto.lc
+   The crypto.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -25,8 +26,10 @@
 
    command crypto
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end crypto
    
 
@@ -37,8 +40,9 @@
    */
    
    on index
-      put atopia_FetchRoster ("cryptoacademy.org") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
+      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+      put atopia_FetchRoster ("cryptoacademy.org") into wikiDomains
+      put roster_ConstructPageArray (wikiDomains) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
 

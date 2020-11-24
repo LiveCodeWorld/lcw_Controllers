@@ -1,10 +1,8 @@
-﻿script "thought.lc" with behavior "behavior_RigLocalOveride"
+﻿script "thought.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster,lib_Federation"
+   return "lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Fedray,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("thought.garden") into refTable
-   put roster_ConstructPageArray (refTable) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   roster_ReturnPageArray "thought.garden"
 end index

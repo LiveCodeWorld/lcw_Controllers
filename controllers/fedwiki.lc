@@ -1,7 +1,8 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The fedwiki.lc controller can be found at: fedwiki.lc
+   The fedwiki.lc controller can be found at: echo.lc
+   Here is some test help
 
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
@@ -10,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,journal,fix_Title,addFedwiki,clean_Title,clean_FirstLetter,compact_Refs,fork_Cleaner,fedwiki" into gControllerHandlers
+   put "fix_Title,clean_Title,addFedwiki,clean_FirstLetter,journal,item_Number,compact_Refs,fork_Cleaner,index,fedwiki" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -26,7 +27,10 @@
    command fedwiki
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
       start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end fedwiki
    
@@ -38,11 +42,34 @@
    */
    
    on index
-      fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
-      put atopia_FetchRoster ("fedwiki.org") into wikiDomains
-      put roster_ConstructPageArray (wikiDomains) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnPageArray "fedwiki.org"
    end index
+   
+   on item_Number
+      put rigFetchSegment(3, "") into wikiDomain
+      put rigFetchSegment(4, "") into pageSlug
+      put rigFetchSegment(5, "0") into itemNum   
+      put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+      
+      switch
+         case itemNum = 0
+            put pageArray ["title"] into itemText
+            break
+         default
+            -- put the number of chars of itemNum into cNum -- this is good
+            put itemNum + 0 into itemNum -- bug (forces number)
+            put pageArray ["story"][itemNum]["text"] into itemText
+      end switch
+      
+      put itemText into returnArray ["text"]
+      /*
+      rigSetHeader "Content-type: application/json"
+      rigSetHeader "Accept: application/json"
+      rigSetHeader "Accept-Charset: utf-8"
+      put word 1 to -1 of itemText
+      */
+      fedwiki_ReturnPageArray returnArray
+   end item_Number
    
    on compact_Refs
       fedwiki_DeconstructDroppedURL pageSlug, wikiDomain

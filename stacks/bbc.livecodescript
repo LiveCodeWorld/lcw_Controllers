@@ -1,6 +1,6 @@
 ﻿script "bbc.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_HTML,lib_PageArray,lib_Podcast,lib_Scrape,model_Secret"
+    return "lib_Encoding,lib_Fedwiki,lib_ListenNotes,lib_PageArray,lib_Podcast,lib_Scrape,model_PageArray,model_Secret"
 end dep_StackNames
 
 on index
@@ -46,51 +46,16 @@ on listenNotes
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
    switch
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)/(.+)", podcastSlug, episodeSlug)
-         -- https://www.listennotes.com/podcasts/wiki-politiki/unity-earth-festival-focuses-ypSB83WRk1U/
-         put listenNotes_ScrapeEpisodeID (droppedURL) into episodeID
-         put listenNotes_ConstructEpisodePageArray (episodeID) into pageArray
+         put listenNotes_PageArrayFromScrape (droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)", podcastSlug)
-         -- https://www.listennotes.com/podcasts/wiki-politiki-iom-radio-network-omtimes-Oni9JDfeoaP/
          fedwiki_ExitAndReturnError "Not implemented importing podcast description yet.", "Not done yet!"
          break
       default
          fedwiki_ExitAndReturnError "Dropped url is not a ListenNotes url I recognise. :(", "Error"
    end switch
 end listenNotes
-
-on test
-   /*
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-   put listenNotes_ScrapeEpisodeID (droppedURL) into episodeID
-   --
-   put listenNotes_ConstructEpisodePageArray (episodeID) into pageArray
-   fedwiki_ReturnPageArray pageArray
-   */
-   
-   put listenNotes_GetRapidApiKey() into apiKey
-   fedwiki_ExitAndReturnError apiKey, "Scraped Episode ID"
-   
-   /*
-   put kwote ("A Short History Of Story: Part one") into searchTerm
-   put lcw_Ask ("Enter episode term", searchTerm) into searchTerm
-   --
-   put listeNotes_SearchAndConstructPageArray (searchTerm) into pageArray
-   fedwiki_ReturnPageArray pageArray
-   */
-end test
-
-on listenMore
-    put fedwiki_GetDroppedArray() into postArray
-   --
-   put postArray ["search_Term"] into googleQuery
-   put postArray ["search_Offset"] into cseOffset
-   -- put postArray ["password"] into somePword
-   --
-   put listenNotes_SearchAndConstructPageArray (googleQuery, somePword, cseOffset, cseName) into pageArray
-   fedwiki_ReturnPageArray pageArray
-end listenMore
 
 on guardian
    _SetDroppedHtml someHTML, droppedURL

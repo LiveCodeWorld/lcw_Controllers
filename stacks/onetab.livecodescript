@@ -1,83 +1,145 @@
-﻿script "onetab.lc" with behavior "behavior_RigLocalOveride"
+﻿script "onetab.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_Scrape,lib_Citation,lib_REST,lib_HTML"
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
+local MarkdownLinks
+
 on index
-   markdown
+   _ReturnOneTab "pretty"
 end index
 
+on markdown
+   _ReturnOneTab "markdown"
+end markdown
+
 on fullfetch
-   put fedwiki_GetDroppedUrl() into someUrl
-   if someUrl begins with "https://www.one-tab.com" then
-      put _ConstructOneTabPageArray (someUrl) into pageArray
-      put json_FromArray (pageArray) into someJSON
-   else
-      put "Not a [[OneTab]] web page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo, "Error") into someJSON
-   end if
-   fedwiki_ReturnJson someJSON
+   _ReturnOneTab
 end fullfetch
 
 on html
-   put fedwiki_GetDroppedUrl() into someUrl
-   if someUrl begins with "https://www.one-tab.com" then
-      put _FetchOneTabPageArray (someUrl, "htmlSection") into pageArray
-      put json_FromArray (pageArray) into someJSON
-   else
-      put "Not a [[OneTab]] html page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo, "Error") into someJSON
-   end if
-   fedwiki_ReturnJson someJSON
+   _ReturnOneTab "htmlSection"
 end html
 
+on pretty
+   _ReturnOneTab "pretty"
+end pretty
+
 on htmlParagraphs
-   put fedwiki_GetDroppedUrl() into someUrl
-   if someUrl begins with "https://www.one-tab.com" then
-      put _FetchOneTabPageArray (someUrl, "htmlParagraphs") into pageArray
-      put json_FromArray (pageArray) into someJSON
-   else
-      put "Not a [[OneTab]] html page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo, "Error") into someJSON
-   end if
-   fedwiki_ReturnJson someJSON
+   _ReturnOneTab "htmlParagraphs"
 end htmlParagraphs
 
-on markdown
-   put fedwiki_GetDroppedUrl() into someUrl
-   if someUrl begins with "https://www.one-tab.com" then
-      put _FetchOneTabPageArray (someUrl, "markdown") into pageArray
-      put json_FromArray (pageArray) into someJSON
-   else
-      put "Not a [[OneTab]] web page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
-      put fedwiki_ConstructErrorJSON (someInfo, "Error") into someJSON
-   end if
-   fedwiki_ReturnJson someJSON
-end markdown
-
-private command _AddHtmlParagraphs @pageArray, tabTitle, divSection, parseArray
-   put "#" && tabTitle into someMarkDown
-   fedwiki_AddMarkdownToPageArray pageArray, someMarkDown
+private command _AddPretty @pageArray, tabTitle, divSection, parseArray
+   put empty into MarkDownLinks
    --
-   put 1 into urlLineNum
-   repeat for each line htmlLine in divSection
-      put parseArray ["urls"][urlLineNum]["linkURL"] into linkURL
+   put "#" && tabTitle into someMarkDown
+   pageArray_AddMarkdown pageArray, someMarkDown
+   --
+   put parseArray ["urls"] into urlArray
+   repeat for each key urlLineNum in urlArray
+      put urlArray [urlLineNum]["someTextLink"] into urlText
+      put urlArray [urlLineNum]["linkURL"] into linkURL
+      --
       put transport_ParseURL (linkURL) into resultArray
       put resultArray ["url"] into restURL
       put resultArray ["handler"] into tHandler
       --
-      dispatch tHandler with pageArray and linkURL
+      dispatch tHandler with pageArray, linkURL, urlText
       --
       add 1 to urlLineNum
    end repeat
-end _AddHtmlParagraphs
+   
+   put word 1 to -1 of MarkDownLinks into MarkDownLinks
+   pageArray_AddMarkdown pageArray, MarkDownLinks
+end _AddPretty
 
-command transport_GoogleImage pageArray, linkURL
+private command _ReturnOneTab pType
+   put fedwiki_GetDroppedUrl() into someUrl
+   if someUrl begins with "https://www.one-tab.com" then
+      put _FetchOneTabPageArray (someUrl, pType) into pageArray
+   else
+      put "Not a [[OneTab]] web page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
+      put pageArray_Construct ("Error", someInfo) into pageArray
+   end if
+   fedwiki_ReturnPageArray pageArray
+end _ReturnOneTab
+
+private function _FetchOneTabPageArray oneTabUrl, pType
+   put url oneTabUrl into someHtml
+   --
+   put "Below are a collection of links imported from [[OneTab]]. You can view these links here - [" & oneTabUrl && "one-tab.com]:" into headerBit
+   _ParseOneTabHtml someHtml, headerBit, markDownLinks, divSection, tabTitle
+   put the result into parseArray
+   --
+   put parseArray ["tabTitle"] into tabTitle
+   put parseArray ["headerBit"] into headerBit
+   put fedwiki_ConstructNewPageArray (tabTitle, headerBit) into pageArray
+   --
+   switch pType
+      case "pretty"
+         _AddPretty pageArray, tabTitle, divSection, parseArray
+         break
+      case "htmlParagraphs"
+         _AddHtmlParagraphs pageArray, tabTitle, divSection, parseArray
+         break
+      case "htmlSection"
+         _AddHtmlSection pageArray, tabTitle, headerBit, divSection
+         break
+      case "markdown"
+         _AddMarkdownSection pageArray, tabTitle, markDownLinks
+         break
+      default
+         put _ConstructOneTabPageArray (parseArray) into pageArray
+   end switch
+   pageArray_StripJournal pageArray
+   return pageArray
+end _FetchOneTabPageArray
+
+command transport_Video @pageArray, videoURL, urlText
+   /*
+   put "https://rest.livecode.world/youtube/transport_Video" into restURL
+   put transporter_ConstructDroppedJSON (videoURL) into dropJSON
+   fedwiki_PostJSON dropJSON, restURL
+   put the result into pageJSON
+   put json_ToArray (pageJSON) into fetchedPageArray
+   */
+   
+   switch
+      case matchText (videoURL, "https\://www\.youtube\.com/watch\?v\=(.+)", videoID)
+         put "[" & videoURL && "youtube]" into word -1 of urlText
+         pageArray_AddVideo pageArray, videoID, "YOUTUBE", urlText
+         -- put youtube_FetchVideoJson (videoID) into someJSON
+         -- put json_ToArray (someJSON) into snippetArray
+         -- add_SnippetToPageArray pageArray, snippetArray
+         break
+      case matchText (videoURL, "https\://www\.ted\.com/talks/(.+)", tedID)
+         -- put ted_ConstructPageArray (tedID) into fedwikiPageArray
+         put "[" & videoURL && "ted]" into word -1 of urlText
+         pageArray_AddVideo pageArray, tedID, "TED", urlText
+         break
+      case matchText (videoURL, "https\://vimeo\.com/(.+)", vimeoID)
+         -- put vimeo_ConstructPageArray (vimeoID) into fedwikiPageArray
+         put "[" & videoURL && "vimeo]" into word -1 of urlText
+         pageArray_AddVideo pageArray, vimeoID, "VIMEO", urlText
+         break
+      default
+         -- do nothing
+   end switch
+end transport_Video
+
+command transport_GoogleImage @pageArray, linkURL, urlText
    _DeconstructGoogleImageUrl linkURL, imageURL, refURL, searchTerms, w, h
    put "Google Image Result for" && kwote (searchTerms) into someCaption
    fedwiki_AddImageToPageArray pageArray, imageURL, someCaption, refURL
    return pageArray
 end transport_GoogleImage
+
+command transport_Webpage @pageArray, linkUrl, urlText
+   put _ConstructMarkDownLink (linkUrl, urlText) into markDownLink
+   -- pageArray_AddMarkdown pageArray, markDownLink
+   put markDownLink & CR after MarkDownLinks
+   return empty
+end transport_Webpage
 
 function transport_ParseURL droppedURL
    switch
@@ -172,7 +234,7 @@ function _ConstructOneTabPageArray oneTabUrl
       switch
          case tHandler is empty and restURL is empty
             put _ConstructItemHtml (itemArray) into imageHTML
-            put fedwiki_ConstructStoryHtmlArray (imageHTML) into storyItemArray
+            pageArray_AddHtml pageArray, imageHTML
             break
          case tHandler is empty
             -- basic processing
@@ -190,7 +252,7 @@ function _ConstructOneTabPageArray oneTabUrl
             --
             if receivedStoryItemArray is an array then
                put "#" && receivedTitle into someMarkDown
-               fedwiki_AddMarkdownToPageArray pageArray, someMarkDown
+               pageArray_AddMarkdown pageArray, someMarkDown
                
                -- add story to the end
                fedwiki_AddStoryArray pageArray, receivedStoryItemArray
@@ -206,65 +268,9 @@ function _ConstructOneTabPageArray oneTabUrl
       end switch
    end repeat
    --
-   fedwiki_StripJournal pageArray
+   pageArray_StripJournal pageArray
    return pageArray
 end _ConstructOneTabPageArray
-
-command transport_Webpage itemArray
-   put itemArray ["linkURL"] into linkURL
-   put itemArray ["someTextLink"] into someTextLink
-   put scrape_ConstructFedwikiPageArray (linkURL, true, true, true) into pageArray
-   --
-   put "#" && someTextLink into someMarkDown -- could use pageTitle
-   put fedwiki_ConstructStoryMarkdownArray (someMarkdown) into storyItemArray [1]
-   
-   -- if scrape was succesful
-   if pageArray is not empty then
-      put pageArray ["story"] into webPageStoryArray
-      fedwiki_AddToStoryArrayItems storyItemArray, webPageStoryArray
-   end if
-   
-   -- add favicon link
-   put itemArray ["linkHTML"] into linkHTML -- could reconstruct from itemArray
-   put offset ("<a ", linkHTML) into sNum -- line 3
-   put space & "target=" & kwote("_blank") after char (sNum + 1) of linkHTML
-   put fedwiki_ConstructStoryHtmlArray (linkHTML) into faviconItemArray
-   fedwiki_AddToEndOfIndexArray faviconItemArray, storyItemArray
-   --
-   return storyItemArray
-end transport_Webpage
-
-private function _FetchOneTabPageArray oneTabUrl, pType
-   put url oneTabUrl into someHtml
-   --
-   put "Below are a collection of links imported from [[OneTab]]. You can view these links here - [" & oneTabUrl && "one-tab.com]:" into headerBit
-   _ParseOneTabHtml someHtml, headerBit, markDownLinks, divSection, tabTitle
-   put the result into parseArray
-   --
-   put parseArray ["tabTitle"] into tabTitle
-   put parseArray ["headerBit"] into headerBit
-   put fedwiki_ConstructNewPageArray (tabTitle, headerBit) into pageArray
-   --
-   switch pType
-      case "htmlParagraphs"
-         _AddHtmlParagraphs pageArray, tabTitle, divSection, parseArray
-         break
-      case "htmlSection"
-         _AddHtmlSection pageArray, tabTitle, headerBit, divSection
-         break
-      case "markdown"
-         _AddMarkdownSection pageArray, tabTitle, markDownLinks
-         break
-      default
-         put _ConstructOneTabPageArray (parseArray) into pageArray
-         -- _AddHtmlParagraphs pageArray, tabTitle, divSection, parseArray
-         -- _AddHtmlSection pageArray, tabTitle, headerBit, divSection
-         -- _AddMarkdownSection pageArray, tabTitle, markDownLinks
-         -- _AddImageSection parseArray, pageArray
-   end switch
-   fedwiki_StripJournal pageArray
-   return pageArray
-end _FetchOneTabPageArray
 
 private command _ParseOneTabHtml someHtml, headerBit, @markDownLinks, @divSection, @tabTitle
    html_Tidy someHtml
@@ -295,21 +301,10 @@ private command _ParseOneTabHtml someHtml, headerBit, @markDownLinks, @divSectio
       put revXMLNodeContents (treeID, aNode) into someTextLink
       replace CR with space in someTextLink
       --
-      set the itemdelimiter to slash
-      put item 3 of someTextURL into tldBit
-      set the itemdelimiter to "."
-      put item -2 to -1 of tldBit into tldBit
-      set the itemdelimiter to ","
+      put _GetTldBit (someTextURL) into tldBit
       
       -- construct markDownLinks
-      if the number of chars of someTextLink > 30 then
-         get char 1 to 30 of someTextLink
-         put word 1 to -2 of it into truncatedLink -- using token seems to break the encoding for json_FromArray???
-         put "..." after truncatedLink
-         put "-" && truncatedLink && "- [" & someTextURL && tldBit & "]" into markDownLink
-      else
-         put "-" && someTextLink && "- [" & someTextURL && tldBit & "]" into markDownLink
-      end if
+      put _ConstructMarkDownLink (someTextURL, someTextLink) into markDownLink
       put CR & markDownLink after markDownLinks
       
       -- construct divSection
@@ -329,16 +324,56 @@ private command _ParseOneTabHtml someHtml, headerBit, @markDownLinks, @divSectio
    return parseArray
 end _ParseOneTabHtml
 
+function _GetTldBit someTextURL
+   set the itemdelimiter to slash
+   put item 3 of someTextURL into tldBit
+   set the itemdelimiter to "."
+   put item -2 to -1 of tldBit into tldBit
+   set the itemdelimiter to ","
+   return tldBit
+end _GetTldBit
+
+private function _ConstructMarkDownLink someTextURL, someTextLink
+   put _GetTldBit (someTextURL) into tldBit
+   --
+   if the number of chars of someTextLink > 30 then
+      get char 1 to 30 of someTextLink
+      put word 1 to -2 of it into truncatedLink -- using token seems to break the encoding for json_FromArray???
+      put "..." after truncatedLink
+      put "-" && truncatedLink && "- [" & someTextURL && tldBit & "]" into markDownLink
+   else
+      put "-" && someTextLink && "- [" & someTextURL && tldBit & "]" into markDownLink
+   end if
+   return markDownLink
+end _ConstructMarkDownLink
+
+private command _AddHtmlParagraphs @pageArray, tabTitle, divSection, parseArray
+   put "#" && tabTitle into someMarkDown
+   pageArray_AddMarkdown pageArray, someMarkDown
+   --
+   put 1 into urlLineNum
+   repeat for each line htmlLine in divSection
+      put parseArray ["urls"][urlLineNum]["linkURL"] into linkURL
+      put transport_ParseURL (linkURL) into resultArray
+      put resultArray ["url"] into restURL
+      put resultArray ["handler"] into tHandler
+      --
+      dispatch tHandler with pageArray, linkURL
+      --
+      add 1 to urlLineNum
+   end repeat
+end _AddHtmlParagraphs
+
 private command _AddMarkdownSection @pageArray, tabTitle, markDownLinks
    put "#" && tabTitle & CR & markDownLinks into someMarkDown
-   fedwiki_AddMarkdownToPageArray pageArray, someMarkDown
+   pageArray_AddMarkdown pageArray, someMarkdown
 end _AddMarkdownSection
 
 private command _AddHtmlSection @pageArray, tabTitle, headerBit, divSection
    put "<h3>" & tabTitle & "</h3>" & CR into divHeader
    put headerBit & "<p>" & CR after divHeader
    put divHeader before divSection
-   fedwiki_AddHtmlToPageArray pageArray, divSection
+   pageArray_AddHtml pageArray, divSection
 end _AddHtmlSection
 
 private command _AddImageSection parseArray, @pageArray
@@ -348,7 +383,7 @@ private command _AddImageSection parseArray, @pageArray
       put urlArray [urlLineNum] into itemArray
       put _ConstructItemHtml (itemArray) into imageHTML
       if imageHTML is not empty then
-         fedwiki_AddHtmlToPageArray pageArray, imageHTML
+         pageArray_AddHtml pageArray, imageHTML
       end if
    end repeat
 end _AddImageSection
@@ -393,6 +428,34 @@ private command _DeconstructGoogleImageUrl someTextURL, @imageURL, @refURL, @sea
       return false
    end if
 end _DeconstructGoogleImageUrl
+
+command transport_HtmlScrape itemArray
+   -- not used
+   put itemArray ["linkURL"] into linkURL
+   put itemArray ["someTextLink"] into someTextLink
+   put scrape_ConstructFedwikiPageArray (linkURL, true, true, true) into pageArray
+   --
+   put "#" && someTextLink into someMarkDown -- could use pageTitle
+   put fedwiki_ConstructStoryMarkdownArray (someMarkdown) into storyItemArray [1]
+   
+   -- if scrape was succesful
+   if pageArray is not empty then
+      put pageArray ["story"] into webPageStoryArray
+      fedwiki_AddToStoryArrayItems storyItemArray, webPageStoryArray
+   end if
+   
+   -- add favicon link
+   put itemArray ["linkHTML"] into linkHTML -- could reconstruct from itemArray
+   put offset ("<a ", linkHTML) into sNum -- line 3
+   put space & "target=" & kwote("_blank") after char (sNum + 1) of linkHTML
+   
+   -- put fedwiki_ConstructStoryHtmlArray (linkHTML) into faviconItemArray
+   pageArray_AddHtml faviconItemArray, linkHTML
+   
+   fedwiki_AddToEndOfIndexArray faviconItemArray, storyItemArray
+   --
+   return storyItemArray
+end transport_HtmlScrape
 
 command html_Tidy @someHtml
    put the tempname & ".html" into inputFile

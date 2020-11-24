@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The thought.lc controller can be found at: thought.lc
+   The thought.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -25,9 +26,11 @@
 
    command thought
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end thought
    
 
@@ -38,9 +41,7 @@
    */
    
    on index
-      put atopia_FetchRoster ("thought.garden") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnPageArray "thought.garden"
    end index
 
 ?>

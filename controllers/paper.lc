@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The paper.lc controller can be found at: paper.lc
+   The paper.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "paper_update,paper_from_wiki,index,paper" into gControllerHandlers
+   put "paper_from_wiki,paper_update,index,paper" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,8 +26,8 @@
 
    command paper
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_RevIgniter.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_DropBox.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Secret.livecodescript")
    end paper
@@ -40,7 +41,7 @@
    
    on index
       -- https://paper.dropbox.com/doc/Writing-with-markdown--AUmjuiRGj1RLWCuvBHoOdxNFAg-Os7UBN3uhgSfPEdi0rqQf
-      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      put fedwiki_GetDroppedUrl() into droppedURL
       switch
          case matchText (droppedURL, "https://paper.dropbox.com/doc/(.+)--([^-]+)-(.+)", docTitleBit, probUserID, docID)
             -- import_paper

@@ -1,10 +1,8 @@
 ﻿script "earth.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster,lib_Federation"
+    return "lib_Fedray,lib_Fedwiki,lib_FedwikiRoster,lib_FedwikiSitemap,lib_PageArray,model_Atopia,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("platform.earth") into refTable
-   put roster_ConstructPageArray (refTable) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   roster_ReturnAtopiaPageArray "platform.earth"
 end index

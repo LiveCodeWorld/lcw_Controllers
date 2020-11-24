@@ -1,10 +1,8 @@
-﻿script "livecode.lc" with behavior "behavior_RigLocalOveride"
+﻿script "livecode.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster,lib_Federation"
+   return "lib_Fedray,lib_Fedwiki,lib_FedwikiRoster,lib_FedwikiSitemap,lib_PageArray,model_Atopia,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("livecode.world") into wikiDomains
-   put roster_ConstructPageArray (wikiDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   roster_ReturnAtopiaPageArray "livecode.world"
 end index

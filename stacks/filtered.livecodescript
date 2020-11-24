@@ -1,6 +1,6 @@
-﻿script "filtered.lc" with behavior "behavior_RigLocalOveride"
+﻿script "filtered.lc"
 getprop dep_StackNames
-   return "lib_Federation,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Federation,model_PageArray"
+   return "lib_AtopiaTree,lib_Federation,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Federation,model_PageArray"
 end dep_StackNames
 
 on index

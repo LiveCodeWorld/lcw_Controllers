@@ -1,14 +1,37 @@
 ﻿script "fedwiki.lc"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_PageArray"
+   return "lib_Fedwiki,lib_FedwikiRoster,lib_FedwikiSitemap,lib_PageArray,model_Fedray,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
-   put atopia_FetchRoster ("fedwiki.org") into wikiDomains
-   put roster_ConstructPageArray (wikiDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   roster_ReturnPageArray "fedwiki.org"
 end index
+
+on item_Number
+   put rigFetchSegment(3, "") into wikiDomain
+   put rigFetchSegment(4, "") into pageSlug
+   put rigFetchSegment(5, "0") into itemNum   
+   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   
+   switch
+      case itemNum = 0
+         put pageArray ["title"] into itemText
+         break
+      default
+         -- put the number of chars of itemNum into cNum -- this is good
+         put itemNum + 0 into itemNum -- bug (forces number)
+         put pageArray ["story"][itemNum]["text"] into itemText
+   end switch
+   
+   put itemText into returnArray ["text"]
+   /*
+   rigSetHeader "Content-type: application/json"
+   rigSetHeader "Accept: application/json"
+   rigSetHeader "Accept-Charset: utf-8"
+   put word 1 to -1 of itemText
+   */
+   fedwiki_ReturnPageArray returnArray
+end item_Number
 
 on compact_Refs
    fedwiki_DeconstructDroppedURL pageSlug, wikiDomain

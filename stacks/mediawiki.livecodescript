@@ -1,6 +1,6 @@
 ﻿script "mediawiki.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Curly,lib_Fedwiki,lib_FedWikiPedia,lib_MediaWiki,lib_PageArray,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
+    return "lib_Curly,lib_Encoding,lib_Fedwiki,lib_FedWikiPedia,lib_MediaWiki,lib_PageArray,lib_Text,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
 end dep_StackNames
 
 on index
@@ -17,9 +17,12 @@ on index
          fedwiki_ReturnJSON pageJSON
          break
       case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
+         set the itemdelimiter to "&" -- quick hack
+         put item 1 of sectionNum into sectionNum
          put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
          break
+      case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
       case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
       case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
       case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
@@ -41,12 +44,11 @@ on index
          fedwiki_ReturnPageArray pageArray
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
-         -- put wikicommons_FetchBasicTwoImagePageArray (shortImageFile, pPageTitle, pSomeText, droppedURL) into pageArray
          put "Wikimedia Image" into pageTitle
          put "Drag these images to your source page..." into someText
-         put fedwiki_ConstructPageArray (pageTitle, someText) into pageArray   
+         put pageArray_Construct (pageTitle, someText) into pageArray   
          wikicommons_FetchAndAddTwoImages pageArray, shortImageFile
-         fedwiki_CleanJournal pageArray
+         pageArray_CleanJournal pageArray
          fedwiki_ReturnPageArray pageArray
          break
       case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
@@ -57,34 +59,13 @@ on index
    end switch
 end index
 
-command fedwiki_TestJsonUrl jsonURL, @pageTitle, @storyArray, @journalArray
-   -- http://openscience.cc/maven-science.json
-   put "http://(.+)/(.+).json" into someReg
-   if matchtext (jsonURL, someReg, wikiDomain, pageSlug) is false then
-      -- if not (jsonURL ends with ".json") then
-      put empty into pageTitle
-      put empty into storyArray
-      put empty into journalArray
-      return false
-   end if
-   --
-   put url jsonURL into pageJSON
-   put json_ToArray (pageJSON) into pageArray
-   --
-   put pageArray ["title"] into pageTitle
-   put pageArray ["story"] into storyArray
-   put pageArray ["journal"] into journalArray
-   --
-   if pageTitle is empty or storyArray is not an array or journalArray is not an array then
-      return false
-   else
-      return true
-   end if
-end fedwiki_TestJsonUrl
-
 on wikipage
    put fedwiki_GetDroppedUrl() into droppedURL
    switch
+      case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://www.gameb.wiki/api.php?", droppedURL) into pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
       case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
          put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
@@ -115,36 +96,44 @@ on wikipage
    end switch
 end wikipage
 
+on form
+   put fedwiki_GetDroppedArray() into postedArray
+   put postedArray ["title"] into pageTitle
+   --
+   put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end form
+
 on favicon
    fedwiki_SetDroppedFaviconInfo fedwikiSlug, fedwikiDomain
    mediawiki_NormaliseTitle fedwikiSlug, pageTitle, pageID
-   -- put wikipedia_ConstructURL (pageTitle) into wikipediaURL
-   -- replace space with "_" in pageSlug
    put "https://en.wikipedia.org/wiki/" & pageTitle into wikipediaUrl
-   -- put fedwiki_ConstructPageArray ("Test", wikipediaURL) into pageArray
    put the result into batchArray
    put mediawiki_FetchPageArray (wikipediaURL) into pageArray
    fedwiki_ReturnPageArray pageArray
 end favicon
 
 on importSection
-   -- section droppedURL or a section form
+   -- put fedwiki_GetDroppedArray() into dropArray
    fedwiki_SetDroppedInfo dropJSON, droppedURL, droppedHTML, droppedText
    put the result into dropArray
    put dropArray ["section_title"] into newPageTitle
+   put dropArray ["url"] into formURL
+   if formURL is not empty then put formURL into droppedURL
    
    put "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$" into someReg
-   if matchText (droppedURL, someReg, someLang, pageSlug, sectionNum) is true then
-      -- put fedwikipedia_FetchSectionSummaryPageArray (pageSlug, sectionNum) into pageArray
-      put wikicommons_ConstructSectionPageArray (pageSlug, sectionNum, droppedURL) into pageArray
-      if newPageTitle is not empty then
-         pageArray_Rename pageArray, newPageTitle
-      end if
-      fedwiki_ReturnPageArray pageArray
-   else
-      put pageArray_Construct ("Not a Wikipedia edit link!", "Not a Wikipedia edit link!" && droppedURL) into pageArray
-      fedwiki_ReturnPageArray pageArray
-   end if
+   switch
+      case matchText (droppedURL, someReg, someLang, pageSlug, sectionNum)
+         -- put fedwikipedia_FetchSectionSummaryPageArray (pageSlug, sectionNum) into pageArray
+         put wikicommons_ConstructSectionPageArray (pageSlug, sectionNum, droppedURL) into pageArray
+         if newPageTitle is not empty then pageArray_Rename pageArray, newPageTitle
+         fedwiki_ReturnPageArray pageArray
+         break
+      default
+         put pageArray_Construct ("Not a Wikipedia edit link!", "Not a Wikipedia edit link!" && droppedURL) into pageArray
+         fedwiki_ReturnPageArray pageArray
+   end switch
 end importSection
 
 on section

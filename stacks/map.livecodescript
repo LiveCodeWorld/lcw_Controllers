@@ -1,6 +1,6 @@
 ﻿script "map.lc"
 getprop dep_StackNames
-   return "lib_Exif,lib_Fedwiki,lib_PageArray,lib_RevIgniter"
+   return "lib_Exif,lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index

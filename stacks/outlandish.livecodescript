@@ -1,10 +1,11 @@
-﻿script "outlandish.lc" with behavior "behavior_RigLocalOveride"
+﻿script "outlandish.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray,lib_FedwikiRoster,lib_Federation"
+   return "lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   put atopia_FetchRoster ("outlandish.academy") into refTable
-   put roster_ConstructPageArray (refTable) into pageArray
+   fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+   put atopia_FetchRoster ("outlandish.academy") into wikiDomains
+   put roster_ConstructPageArray (wikiDomains) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index

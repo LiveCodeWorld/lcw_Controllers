@@ -1,10 +1,10 @@
-﻿script "atopia.lc" with behavior "behavior_RigLocalOveride"
+﻿script "atopia.lc"
 getprop dep_StackNames
-    return "lib_Federation,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Federation,model_PageArray"
+   return "lib_AtopiaTree,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Atopia,model_PageArray"
 end dep_StackNames
 
 on index
-   put federation_FetchRecentAtopia() into atopiaDomains  
+   put atopia_ListRecentDomains() into atopiaDomains  
    put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
    put roster_ConstructPageArray (rosterText) into pageArray
    fedwiki_ReturnPageArray pageArray
@@ -14,7 +14,7 @@ on list
    put fedwiki_GetDroppedArray() into postArray
    put postArray ["outputType"] into outputType
    --
-   put federation_FetchRecentAtopia () into wikiDomains
+   put atopia_ListRecentDomains () into wikiDomains
    switch outputType
       case "top"
          put url_ListTopDomains (wikiDomains) into wikiDomains

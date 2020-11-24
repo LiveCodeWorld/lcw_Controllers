@@ -1,6 +1,6 @@
 ﻿script "photo.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_PageArray"
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
@@ -14,7 +14,7 @@ on index
    put empty into imageCaption
    --
    put fedwiki_ConstructNewPageArray (pageTitle, pageText) into pageArray
-   fedwiki_AddImageToPageArray pageArray, imageURL, imageCaption, captionLinkURL
+   pageArray_AddImage pageArray, imageURL, imageCaption, captionLinkURL
    --
    fedwiki_ReturnPageArray pageArray
 end index

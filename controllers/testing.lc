@@ -1,0 +1,47 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The testing.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "index,testing" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "testing.lc" below.
+   --
+   */
+
+   command testing
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_URL.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+   end testing
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put fedray_FetchDomains ("voz.money") into rosterDomains
+      put pageArray_Construct ("Money", rosterDomains) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end index
+
+?>
