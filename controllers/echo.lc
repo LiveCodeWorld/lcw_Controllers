@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "myip,postraw,index,server,echo" into gControllerHandlers
+   put "myip,postraw,server,index,echo" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -27,7 +27,7 @@
    command echo
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end echo
    
 
@@ -39,7 +39,7 @@
    
    on index
       put _ConstructTestText() into someMarkdown
-      put fedray_FetchDomains ("voz.money") into rosterDomains
+      -- put fedray_FetchDomains ("voz.money") into rosterDomains
       
       put $_SERVER into tServerArray
       put tServerArray ["PATH_TRANSLATED"] into pathTranslated

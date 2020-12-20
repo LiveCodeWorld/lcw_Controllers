@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "wikiFolders,list,index,atopia" into gControllerHandlers
+   put "list,index,atopia" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,14 +25,11 @@
    */
 
    command atopia
-      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
       start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end atopia
    
@@ -44,31 +41,17 @@
    */
    
    on index
-      -- ,model_Atopia,model_Federation,model_Fedwiki
-      put federation_FetchRecentAtopia() into atopiaDomains  
+      put atopia_ListRecentDomains() into atopiaDomains  
       put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
       put roster_ConstructPageArray (rosterText) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
    
-   on wikiFolders
-      -- put "thought.garden" into wikiDomain
-      put rigFetchSegment(3, "") into wikiDomain
-      put roster_FetchLive (wikiDomain) into wikiFolderIndex
-      if word 1 of wikiFolderIndex = "ssh" then
-         put empty
-      else
-         -- put atopia_FetchWikiFolders (wikiDomain) into wikiFolderIndex
-         url_SortDomainIndex wikiFolderIndex
-         put wikiFolderIndex
-      end if
-   end wikiFolders
-   
    on list
       put fedwiki_GetDroppedArray() into postArray
       put postArray ["outputType"] into outputType
       --
-      put federation_FetchRecentAtopia () into wikiDomains
+      put atopia_ListRecentDomains () into wikiDomains
       switch outputType
          case "top"
             put url_ListTopDomains (wikiDomains) into wikiDomains

@@ -1,10 +1,10 @@
 ﻿script "atopia.lc"
 getprop dep_StackNames
-   return "lib_AtopiaTree,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Atopia,model_PageArray"
+   return "lib_AtopiaTree,lib_Azure,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,model_Atopia,model_PageArray"
 end dep_StackNames
 
 on index
-   put atopia_ListRecentDomains() into atopiaDomains  
+   put atopia_ListSinceDomains ("1 week") into atopiaDomains  
    put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
    put roster_ConstructPageArray (rosterText) into pageArray
    fedwiki_ReturnPageArray pageArray

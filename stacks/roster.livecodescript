@@ -1,6 +1,6 @@
 ﻿script "roster.lc"
 getprop dep_StackNames
-   return "lib_Curly,lib_Date,lib_Fedray,lib_Fedwiki,lib_FedwikiCreate,lib_FedwikiRoster,lib_GoogleCustomSearch,lib_PageArray,lib_Transport,model_Atopia,model_AtopiaAuthors,model_Federation,model_Fedray,model_PageArray"
+   return "lib_AtopiaTree,lib_Curly,lib_Date,lib_Fedray,lib_Fedwiki,lib_FedwikiCreate,lib_FedwikiRoster,lib_GoogleCustomSearch,lib_PageArray,lib_Transport,model_Atopia,model_AtopiaAuthors,model_Federation,model_Fedray,model_PageArray"
 end dep_StackNames
 
 on index 
@@ -19,20 +19,45 @@ on index
 end index
 
 on sites
-   put transport_GetFormDomain() into wikiDomain
+   transport_SetFormTitleDomain wikiDomain, pageTitle
+   federation_ReturnSitesPageArray wikiDomain, pageTitle
+end sites
+
+on atopiaSites
+   transport_SetFormTitleDomain wikiDomain, pageTitle
+   atopia_ReturnSitesPageArray wikiDomain, pageTitle
+end atopiaSites
+
+on subdomain
+   transport_SetFormSlugDomain wikiDomain, pageSlug
+   put the result into postArray
+   put postArray ["sincePeriod"] into sincePeriod
+   put postArray ["authorName"] into authorName
+   /*
+   put "author.fedwiki.org" into wikiDomain
+   put "David Bovill" into authorName
+   put "david-bovill-sites" into pageSlug
+   */
+   
+   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put author_ListFedrayDomains (authorName, sincePeriod) into wikiDomains
    --
-   put atopia_FetchRoster (wikiDomain) into rosterDomains
-   put roster_ConstructSitesPageArray (wikiDomain, rosterDomains) into pageArray
+   put "List of sites" into sectionTitle
+   put fedwiki_MarkdownIndex (wikiDomains) into markdownIndex
+   --
+   pageArray_EditSectionTitleText pageArray, sectionTitle, markdownIndex
+   put authorName & CR&CR & wikiDomains into rosterText
+   pageArray_SetFirstItem pageArray, "roster", rosterText
    --
    fedwiki_ReturnPageArray pageArray
-end sites
+end subdomain
 
 on federation
    put transport_GetFormDomain() into wikiDomain
    -- put "voz.money" into wikiDomain
    --
    put fedray_FetchDomains (wikiDomain) into rosterDomains
-   put roster_ConstructSitesPageArray (wikiDomain, rosterDomains) into pageArray
+   put roster_ConstructSitesPageArray (wikiDomain, rosterDomains, pageTitle) into pageArray
    --
    fedwiki_ReturnPageArray pageArray
 end federation
@@ -92,30 +117,6 @@ on refs
    --
    fedwiki_ReturnPageArray fromPageArray   
 end refs
-
-on subdomain
-   transport_SetFormSlugDomain wikiDomain, pageSlug
-   put the result into postArray
-   put postArray ["sincePeriod"] into sincePeriod
-   put postArray ["authorName"] into authorName
-   /*
-   put "author.fedwiki.org" into wikiDomain
-   put "David Bovill" into authorName
-   put "david-bovill-sites" into pageSlug
-   */
-   
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
-   put author_ListFedrayDomains (authorName, sincePeriod) into wikiDomains
-   --
-   put "List of sites" into sectionTitle
-   put fedwiki_MarkdownIndex (wikiDomains) into markdownIndex
-   --
-   pageArray_EditSectionTitleText pageArray, sectionTitle, markdownIndex
-   put authorName & CR&CR & wikiDomains into rosterText
-   pageArray_SetFirstItem pageArray, "roster", rosterText
-   --
-   fedwiki_ReturnPageArray pageArray
-end subdomain
 
 on list
    put transport_GetFormDomain() into wikiDomain

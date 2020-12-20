@@ -48,7 +48,7 @@
       put empty into imageCaption
       --
       put fedwiki_ConstructNewPageArray (pageTitle, pageText) into pageArray
-      fedwiki_AddImageToPageArray pageArray, imageURL, imageCaption, captionLinkURL
+      pageArray_AddImage pageArray, imageURL, imageCaption, captionLinkURL
       --
       fedwiki_ReturnPageArray pageArray
    end index

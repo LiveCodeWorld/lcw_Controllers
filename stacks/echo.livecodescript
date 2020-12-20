@@ -1,6 +1,6 @@
 ﻿script "echo.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray"
+    return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
@@ -20,11 +20,21 @@ on index
    
    put cgi_TextPath ("hello.txt") into filePath
    put url ("file:" & filePath) into someText
+   put CR after someMarkdown
    
-   put CR & "# Hello World" after someMarkdown
+   put "# gRoute" & CR after someMarkdown
+   put the keys of gRoute & CR after someMarkdown
+   put gRoute[2]["journals"] & CR after someMarkdown
+   put the keys of gRoute[3] & CR after someMarkdown
+   
+   put "# Hello World" & CR after someMarkdown
    put someText & CR after someMarkdown
    
+   -- put CR & "# Headers" after someMarkdown
+   -- put libUrlLastRhHeaders() & CR after someMarkdown
+   
    -- now write to database
+   put CR after someMarkdown
    put "Hello world!" && the ticks into url ("file:" & textPath)
    
    -- put keys (tServerArray) & CR after someMarkdown

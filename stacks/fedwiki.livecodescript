@@ -1,10 +1,11 @@
 ﻿script "fedwiki.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_FedwikiRoster,lib_FedwikiSitemap,lib_PageArray,model_Fedray,model_Fedwiki,model_PageArray"
+   return "lib_AtopiaTree,lib_Fedwiki,lib_FedwikiRoster,lib_FedwikiSitemap,lib_PageArray,model_Fedwiki,model_PageArray"
 end dep_StackNames
 
 on index
-   roster_ReturnPageArray "fedwiki.org"
+   -- roster_ReturnPageArray "fedwiki.org"
+   atopia_ReturnRoster "fedwiki.org"
 end index
 
 on item_Number

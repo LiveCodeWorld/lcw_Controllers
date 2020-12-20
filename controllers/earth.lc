@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The earth.lc controller can be found at: earth.lc
+   The earth.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -24,10 +25,14 @@
    */
 
    command earth
+      start using stack (gAPPPATH & "stacks/lib_Fedray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end earth
    
 
@@ -38,9 +43,7 @@
    */
    
    on index
-      put atopia_FetchRoster ("platform.earth") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnAtopiaPageArray "platform.earth"
    end index
 
 ?>

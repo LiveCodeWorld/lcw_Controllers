@@ -7,19 +7,9 @@ on index
    put fedwiki_GetDroppedArray() into dArray
    put dArray ["authorName"] into authorName
    put dArray ["sincePeriod"] into sincePeriod
-   put dArray ["domainSlug"] into domainSlug
+   put dArray ["authorTemplate"] into authorTemplate
    --
-   put author_FetchUpdatedPageArray (authorName, sincePeriod, domainSlug) into pageArray
+   put author_FetchUpdatedPageArray (authorName, sincePeriod, authorTemplate) into pageArray
    --
    fedwiki_ReturnPageArray pageArray
 end index
-
-on test
-   put "David Bovill" into authorName
-   put "1 week" into sincePeriod
-   put "author.fedwiki.org/david-bovill-recent-sites" into domainSlug
-   
-   put author_FetchUpdatedPageArray (authorName, sincePeriod, domainSlug) into pageArray
-   --
-   fedwiki_ReturnPageArray pageArray
-end test

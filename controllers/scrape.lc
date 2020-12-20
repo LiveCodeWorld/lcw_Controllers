@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The scrape.lc controller can be found at: scrape.lc
+   The scrape.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -40,6 +41,9 @@
    */
    
    on index
+      put fedwiki_GetDroppedUrl() into droppedURL
+      if droppedURL is empty then fedwiki_ExitAndReturnError "Dropped url is empty.", "Error"
+      --
       put scrape_ConstructFedwikiPageArray (droppedURL, true, true, true) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
