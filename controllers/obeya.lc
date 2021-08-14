@@ -42,7 +42,7 @@
    */
    
    on index
-      roster_ReturnAtopiaPageArray "obeya.xyz"
+      atopia_ReturnRoster "obeya.xyz"
    end index
 
 ?>

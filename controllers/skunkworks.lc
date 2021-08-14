@@ -42,7 +42,7 @@
    */
    
    on index
-      roster_ReturnAtopiaPageArray "offersandwants.me"
+      atopia_ReturnRoster "offersandwants.me"
    end index
 
 ?>

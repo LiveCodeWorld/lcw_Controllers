@@ -1,0 +1,146 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The intentional.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "importCountry,createContact,importCommunity,index,intentional" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "intentional.lc" below.
+   --
+   */
+
+   command intentional
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Intentionalcommunity.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Map.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Transport.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+   end intentional
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put fedwiki_GetDroppedUrl() into droppedURL
+      put urldecode (droppedURL) into droppedURL
+      _SetCountryAndProvince droppedURL, someCountry, someState, someCity
+      --
+      switch
+         case droppedURL begins with "https://www.ic.org/directory/listings/?country="
+         case droppedURL begins with "https://www.ic.org/directory/listings/?"
+            put ic_FetchCountryData (someCountry, someState) into icListData
+            --
+            put someCountry into pageTitle
+            if someState is not empty then put "," && someState after pageTitle
+            put ic_PageFromListData (icListData, pageTitle) into pageArray
+            --
+            break
+         case matchText (droppedURL, "https://www.ic.org/directory/(.+)/", typeOrSlug)
+            put _ConstructTypeOrSlugPageArray (typeOrSlug) into pageArray
+            break
+         default
+            put pageArray_Construct ("Error", "Not a www.ic.org listing!") into pageArray
+      end switch
+      --
+      fedwiki_ReturnPageArray pageArray
+   end index
+   
+   on importCommunity
+      put transport_GetFormValue ("icSlug") into icSlug
+      -- put "serene-light-gardens" into icSlug
+      --
+      put ic_FetchCommunityData (icSlug) into communityData
+      put ic_PageFromCommunityData (communityData) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end importCommunity
+   
+   on importCountry
+      put transport_GetFormValue ("country") into someCountry
+      --
+      put ic_PageFromCountry (someCountry) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end importCountry
+   
+   on createContact
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["contactName"] into contactName
+      put postArray ["contactPhone"] into contactPhone
+      --
+      put contactName into pageTitle
+      put pageArray_Construct (pageTitle, contactPhone) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end createContact
+   
+   private command _SetCountryAndProvince droppedURL, @someCountry, @someState, @someCity
+      -- country=Austria
+      set the itemdelimiter to "?"
+      put item -1 of droppedURL into dirParamArray
+      split dirParamArray with "&" and "="
+      --
+      put dirParamArray ["country"] into someCountry
+      put dirParamArray ["state"] into someState
+      if someState is empty then
+         put dirParamArray ["province"] into someState
+      end if
+      put dirParamArray ["city"] into someCity
+   end _SetCountryAndProvince
+   
+   private function _ConstructTypeOrSlugPageArray typeOrSlug
+      switch typeOrSlug
+         /*
+         case "Christian Communities"
+         case "jewish-communities"
+            put ic_FetchCommunityTypeData ("spiritual", "&spiritual=Jewish") into communityTypeData
+            put ic_PageFromCommunityTypeData (communityTypeData, "Coop") into pageArray
+            break
+            */
+         case "Cohousing"
+         case "cohousing-communities"
+            put ic_FetchCommunityTypeData ("Cohousing") into communityTypeData
+            put ic_PageFromCommunityTypeData (communityTypeData, typeOrSlug) into pageArray
+            break
+            break
+         case "Co-ops"
+         case "Student Co-ops"
+            put ic_FetchCommunityDescriptionData ("coop") into communityTypeData
+            put ic_PageFromCommunityTypeData (communityTypeData, typeOrSlug) into pageArray
+            break
+         case "Ecovillages"
+            put ic_FetchCommunityTypeData ("ecovillage") into communityTypeData
+            put ic_PageFromCommunityTypeData (communityTypeData, typeOrSlug) into pageArray
+            break
+         case "Communes"
+            put ic_FetchCommunityTypeData ("commune") into communityTypeData
+            put ic_PageFromCommunityTypeData (communityTypeData, typeOrSlug) into pageArray
+            break
+         default
+            -- https://www.ic.org/directory/gro-rainbow-community/
+            put ic_FetchCommunityData (typeOrSlug) into communityData
+            put ic_PageFromCommunityData (communityData) into pageArray
+      end switch
+      return pageArray
+   end _ConstructTypeOrSlugPageArray
+
+?>

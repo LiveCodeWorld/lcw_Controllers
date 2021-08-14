@@ -1,43 +1,76 @@
 ﻿script "scrape.lc"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray"
+   return "lib_Citation,lib_Curly,lib_Fedwiki,lib_HTML,lib_ImageMagick,lib_Map,lib_PageArray,lib_REST,lib_Scrape,lib_Transport,model_PageArray"
 end dep_StackNames
 
 on index
-   -- put scrape_ConstructFedwikiPageArray (droppedURL, true, true, true) into pageArray
+   -- Respond to Ward's Fedwiki scrape-completion webhook
    
    put fedwiki_GetDroppedArray() into postArray
    put postArray ["date"] into lastUpdatedSeconds
-   convert lastUpdatedSeconds to internet date
    --
-   put "Scrape Report" into pageTitle
-   put fedwiki_ConstructSlug (pageTitle) into pageSlug
+   -- atopia_TrashAndUpdateModified
+   -- put the result into atopiaCatModel
    --
-   put postArray ["index"]["scan"] into scanNum
-   put postArray ["index"]["sites"] into siteNum
-   put postArray ["index"]["slugs"] into slugNum
-   --
-   put postArray ["scan"]["pages"] into scanPageNum
-   put postArray ["scan"]["sites"] into scanSiteNum
-   --
-   put merge ("Thanks for update [[scanNum]] on [[lastUpdatedSeconds]]. That makes [[siteNum]] sites indexed to date. I will return something useful here in the future") into someMarkdown
-   --
-   put pageArray_Construct (pageTitle, someMarkdown) into pageArray
-   --
-   fedwiki_ReturnPageArray pageArray
+   put transport_ConstructUpdatePageArray (lastUpdatedSeconds, postArray) into pageArray
+   transport_StorePageArray pageArray
+   put the result into tResult
+   put tResult
+   /*
+   if item 1 of tResult is "error" then
+      put pageArray_Construct ("Bad", tResult) into responseArray
+   else
+      put pageArray_Construct ("Good", tResult) into responseArray
+   end if
+   pageArray_AddMarkdown responseArray, "That is all for now. We will return more useful data here at a later date."
+   fedwiki_ReturnPageArray responseArray
+   */
 end index
 
-on test
-   rigLoadHelper "file"
-   put rigReadFile("./report.json") into pageJSON
-   -- fedwiki_ReturnJSON pageJSON
+on htmlPage
+   transport_DropTest droppedURL, srcImageURL, qEnd, isFavicon
+   put the result into imageAttributeArray
    --
-   if rigWriteFile ("./json/test.json", pageJSON) is FALSE then
-      put pageArray_Construct ("Bad", "Unable to write the file") into pageArray
-   else
-      put rigGetFileNames("./json/") into someMarkDown
-      put pageArray_Construct ("Good", someMarkDown) into pageArray
-   end if
-   --
-   fedwiki_ReturnPageArray pageArray
-end test
+   switch
+      case isFavicon
+         put pageArray_Construct ("Test","You dropped a fedwiki favicon") into pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
+      case srcImageURL begins with "https://www.google.com/search?q="
+      case srcImageURL begins with "https://www.google.com/imgres?imgurl="
+         put pageArray_ConstructGoogleImagePage (imageURL) into pageArray
+         break
+      case srcImageURL is not empty
+         put pageArray_ConstructImageEditPage (srcImageURL, imageAttributeArray, true) into pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
+      case qEnd is among the items of "ogg,mp3,m4A,wav"
+         put pageArray_Construct ("Dropped Audio", "Drag audio file to anothe page...") into pageArray
+         put fedwiki_ConstructImageCaption ("Dropped audio", droppedURL) into audioCaption
+         pageArray_AddAudio pageArray, droppedURL, audioCaption
+         fedwiki_ReturnPageArray pageArray
+         break
+      case qEnd is among the items of "mp4,webm"
+      case droppedURL begins with "https://www.youtube.com/"
+      case droppedURL begins with "https://vimeo.com/"
+      case droppedURL begins with "https://www.ted.com/talks/"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/youtube"
+         break
+      case matchText (droppedURL, "https://www.pinterest.com/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/pinterest"
+         break
+      case matchText (droppedURL, "https://www.flickr.com/photos/(.+)/(.+)/in/.+", userID, photoID)
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/flickr"
+         break
+      case qEnd is among the items of "jpg,jpeg,png,gif,webp,svg"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/photo"
+         break
+      case droppedURL begins with "https://www.google.com/imgres?imgurl="
+      case droppedURL begins with "https://www.google.co.uk/imgres?imgurl="
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/google"
+         break
+      default
+         put scrape_ConstructFedwikiPageArray (droppedURL) into pageArray
+         fedwiki_ReturnPageArray pageArray
+   end switch
+end htmlPage

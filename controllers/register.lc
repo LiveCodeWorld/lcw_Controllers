@@ -1,0 +1,95 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The register.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "writePageJson,clearRoster,index,register" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "register.lc" below.
+   --
+   */
+
+   command register
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Transport.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+   end register
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      _SetParams wikiToAdd, rosterName, templateDomain
+      put transport_FetchRosterPageArray (rosterName, wikiToAdd, templateDomain) into pageArray
+      --
+      transport_StorePageArray pageArray
+      put the result into jsonPath
+      put pageArray_Construct ("Activity", jsonPath) into activityPageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end index
+   
+   on clearRoster
+      _SetParams wikiToAdd, rosterName, templateDomain
+      put transport_FetchEmptyRosterPageArray (rosterName, templateDomain) into pageArray
+      --
+      transport_StorePageArray pageArray
+      put the result into jsonPath
+      put pageArray_Construct ("Activity", jsonPath) into activityPageArray
+      --
+      fedwiki_ReturnPageArray activityPageArray
+   end clearRoster
+   
+   private command _SetParams @wikiToAdd, @rosterName, @templateDomain
+      /*
+      put "One World Sites" into rosterName
+      put "david.dojo.fed.wiki" into wikiToAdd
+      put empty into templateDomain
+      return true
+      */
+      
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["rosterName"] into rosterName
+      put postArray ["templateDomain"] into templateDomain
+      --
+      put postArray ["wikiDomain"] into wikiToAdd
+      if wikiToAdd is empty then
+         set the itemdelimiter to slash
+         put item 3 of $HTTP_REFERER into wikiToAdd
+      end if
+   end _SetParams
+   
+   on writePageJson
+      fedwiki_SetRawJSON rawJSON
+      put json_ToArray (rawJSON) into pageArray
+      --
+      -- Should use a password
+      transport_StorePageArray pageArray
+      put the result into jsonPath
+      --
+      put pageArray_Construct ("Transport Register writePageJson", jsonPath) into rPageArray
+      fedwiki_ReturnPageArray rPageArray
+   end writePageJson
+
+?>

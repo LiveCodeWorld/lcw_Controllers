@@ -1,6 +1,6 @@
 ﻿script "mediawiki.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Curly,lib_Encoding,lib_Fedwiki,lib_FedWikiPedia,lib_MediaWiki,lib_PageArray,lib_Text,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
+    return "lib_Curly,lib_Encoding,lib_Fedwiki,lib_FedWikiPedia,lib_Map,lib_MediaWiki,lib_PageArray,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
 end dep_StackNames
 
 on index
@@ -17,8 +17,6 @@ on index
          fedwiki_ReturnJSON pageJSON
          break
       case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
-         set the itemdelimiter to "&" -- quick hack
-         put item 1 of sectionNum into sectionNum
          put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
          break
@@ -30,7 +28,11 @@ on index
       case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
       case matchText (droppedText, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-         wikipage droppedURL
+         wikipage
+         break
+      case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
+         -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
+         wikipage
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.ogg)", shortAudioFile)
          put "An audio from the commons..." into someText
@@ -55,52 +57,32 @@ on index
          thumbNail droppedHtml
          break
       default
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/echo"
+         put pageArray_Construct ("Error", "Not a mediawiki site I recognise!") into pageArray
+         fedwiki_ReturnPageArray pageArray
    end switch
 end index
 
 on wikipage
    put fedwiki_GetDroppedUrl() into droppedURL
-   switch
-      case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
-         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://www.gameb.wiki/api.php?", droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
-         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break  
-      case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
-         put xkcd_FetchPageArray (droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
-         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://rationalwiki.org/w/api.php?", droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
-         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://en.bitcoin.it/w/api.php?", droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
-         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://sterbalssundrystudies.miraheze.org/w/api.php?", droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-         put mediawiki_FetchPageArray (droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-         break
-      default
-         put pageArray_Construct ("Not a Wikipedia page!", "Not a Wikipedia page!" && droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
-   end switch
+   put _GetPageArray (droppedURL) into pageArray
+   fedwiki_ReturnPageArray pageArray
 end wikipage
 
 on form
    put fedwiki_GetDroppedArray() into postedArray
    put postedArray ["title"] into pageTitle
+   put postedArray ["url"] into postedURL
    --
-   put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
+   switch
+      case postedURL is not empty
+         put _GetPageArray (postedURL) into pageArray
+         break
+      case pageTitle is not empty
+         put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
+         break
+      default
+         put pageArray_Construct ("Error", "Failed to post a wikipedia url or title to form!") into pageArray
+   end switch
    --
    fedwiki_ReturnPageArray pageArray
 end form
@@ -158,3 +140,36 @@ command thumbNail droppedHTML
    --
    fedwiki_ReturnJSON pageJSON
 end thumbNail
+
+private function _GetPageArray droppedURL
+   switch
+      case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
+         -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://meta.wikimedia.org/w/api.php?", droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://www.gameb.wiki/api.php?", droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into pageArray
+         break  
+      case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
+         put xkcd_FetchPageArray (droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://rationalwiki.org/w/api.php?", droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://en.bitcoin.it/w/api.php?", droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
+         put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://sterbalssundrystudies.miraheze.org/w/api.php?", droppedURL) into pageArray
+         break
+      case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
+         put mediawiki_FetchPageArray (droppedURL) into pageArray
+         break
+      default
+         put pageArray_Construct ("Not a Wikipedia page!", "Not a Wikipedia page!" && droppedURL) into pageArray
+   end switch
+   return pageArray
+end _GetPageArray

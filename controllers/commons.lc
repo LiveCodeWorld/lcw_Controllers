@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The commons.lc controller can be found at: commons.lc
+   The commons.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -25,10 +26,9 @@
 
    command commons
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
    end commons
    
 
@@ -39,9 +39,7 @@
    */
    
    on index
-      put atopia_FetchRoster ("commons.world") into refTable
-      put roster_ConstructPageArray (refTable) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnPageArray "commons.world", true
    end index
 
 ?>

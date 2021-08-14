@@ -24,7 +24,6 @@
    */
 
    command pinterest
-      start using stack (gAPPPATH & "stacks/lib_Pinterest.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
    end pinterest
    
@@ -43,17 +42,14 @@
          case matchText (droppedURL, "https://www.pinterest.com/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
          case matchText (droppedURL, "https://www.pinterest.co.uk/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
             -- https://www.pinterest.com/pin/134545107601633296/
-            _Pinterest photoID
+            put pinterest_FetchPinPageJson (photoID) into pageJSON
+            fedwiki_ReturnJSON pageJSON
             break
          default
-            webpage droppedURL
+            -- webpage droppedURL
+            fedwiki_ExitAndReturnError "Dropped url is nor recognised.", "Error"
             break
       end switch
    end index
-   
-   private command _Pinterest photoID
-      put pinterest_FetchPinPageJson (photoID) into pageJSON
-      fedwiki_ReturnJSON pageJSON
-   end _Pinterest
 
 ?>

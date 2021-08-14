@@ -1,7 +1,6 @@
 ﻿script "flag.lc"
 getprop dep_StackNames
-   -- return "lib_Curly,lib_Fedwiki,lib_PageArray,model_PageArray"
-   return "lib_Curly,lib_Fedwiki,lib_MediaWiki,lib_PageArray,lib_WikiPageArray,model_PageArray"
+    return "lib_Curly,lib_Fedwiki,lib_MediaWiki,lib_PageArray,lib_WikiPageArray,model_PageArray"
 end dep_StackNames
 
 on index
@@ -37,8 +36,6 @@ on editPageTitle
    --
    put pageArray_Fetch (wikiDomain, originalSlug, true) into pageArray
    pageArray_Rename pageArray, newPageTitle
-   put originalSlug && wikiDomain into someMarkdown
-   pageArray_AddMarkdown pageArray, someMarkdown
    --
    fedwiki_ReturnPageArray pageArray
 end editPageTitle

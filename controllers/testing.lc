@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,testing" into gControllerHandlers
+   put "good,bad,index,testing" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,10 +25,10 @@
    */
 
    command testing
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_URL.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaFetch.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_URL.livecodescript")
    end testing
    
 
@@ -39,9 +39,29 @@
    */
    
    on index
-      put fedray_FetchDomains ("voz.money") into rosterDomains
-      put pageArray_Construct ("Money", rosterDomains) into pageArray
+      put "voz.money" into wikiDomain
+      get fedwiki_FetchPluginJSON ("federation-model", "roster.fedwiki.org")
+      put json_ToArray (it) into fedray
+      put keys (fedray) into wikiDomains
+      put pageArray_Construct ("Money", wikiDomains) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
+   
+   on good
+      put fedray_FetchDomains ("voz.money") into fedrayDomains
+      --
+      put pageArray_Construct ("Money", fedrayDomains) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end good
+   
+   on bad
+      put fedray_Fetch() into fedray
+      --
+      put keys (fedray) into fedrayDomains
+      url_SortDomainIndex fedrayDomains
+      --
+      put pageArray_Construct ("Money", fedrayDomains) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end bad
 
 ?>

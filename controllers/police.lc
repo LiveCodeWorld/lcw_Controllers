@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "police" into gControllerHandlers
+   put "dojo,index,police" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,7 +25,12 @@
    */
 
    command police
-
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end police
    
 
@@ -35,6 +40,12 @@
    --
    */
    
+   on index
+      roster_ReturnPageArray "dojo.fed.wiki", "Challenges of Policing"
+   end index
    
+   on dojo
+      roster_ReturnPageArray "dojo.fed.wiki"
+   end dojo
 
 ?>

@@ -1,22 +1,23 @@
 ﻿script "podcast.lc"
 getprop dep_StackNames
-    return "lib_Date,lib_Encoding,lib_Fedwiki,lib_Feed,lib_ListenNotes,lib_PageArray,lib_XML,model_PageArray"
+   return "lib_Date,lib_Encoding,lib_Fedwiki,lib_Feed,lib_ListenNotes,lib_PageArray,lib_PageSection,lib_XML,model_PageArray"
 end dep_StackNames
 
 on index
    put fedwiki_GetDroppedUrl() into droppedURL
    switch
-      case fedwiki_IsFaviconDrop (dropJSON)
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/mediawiki"
-         break
-      case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/mediawiki"
+      case qEnd is among the items of "ogg,mp3,m4A,wav"
+         put pageArray_Construct ("Dropped Audio", "Drag audio file to anothe page...") into pageArray
+         put fedwiki_ConstructImageCaption ("Dropped audio", droppedURL) into audioCaption
+         pageArray_AddAudio pageArray, droppedURL, audioCaption
+         fedwiki_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)/(.+)", podcastSlug, episodeSlug)
          put listenNotes_PageArrayFromScrape (droppedURL) into pageArray
          fedwiki_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)", podcastSlug)
+         -- fedwiki_ForwardAndReturn "https://rest.livecode.world/bbc/listenNotes"
          put listenNotes_ScrapePodcastID (droppedURL) into podcastID
          put listenNotes_FetchPodcastPageArray (podcastID) into pageArray
          fedwiki_ReturnPageArray pageArray
@@ -25,16 +26,6 @@ on index
          fedwiki_ExitAndReturnError "Dropped url is not a ListenNotes url I recognise. :(", "Error"
    end switch
 end index
-
-on testRSS
-   put _RssPageArray() into pageArray
-   --
-   put fedwiki_GetDroppedArray() into postedArray
-   put postedArray ["itemNum"] into itemNum
-   pageArray_Trim pageArray, itemNum
-   --
-   fedwiki_ReturnPageArray pageArray
-end testRSS
 
 on rss
    put _RssPageArray() into pageArray
@@ -93,6 +84,9 @@ on importEpisode
 end importEpisode
 
 on importPodcast
+   -- the first after a search
+   -- Used by wiki-button displayed on generated "Found Podcast" page
+   
    put fedwiki_GetDroppedArray() into postedArray
    put postedArray ["podcastID"] into podcastID
    -- put "8f0714068478481192cf9553881463d9" into podcastID
@@ -105,6 +99,24 @@ on importPodcast
    put listenNotes_FetchPodcastPageArray (podcastID) into pageArray
    fedwiki_ReturnPageArray pageArray
 end importPodcast
+
+on updateRecent
+   /*
+   put "Babbage from Economist Radio" into pageTitle
+   put "43e615fb2f0646d3b02a58a751cd6bd1" into podcastID
+   */
+   put fedwiki_GetDroppedArray() into postedArray
+   put postedArray ["pageTitle"] into pageTitle
+   put postedArray ["podcastID"] into podcastID
+   --
+   if podcastID is empty then
+      put merge ("This transporter requires and podcast id and cannot be used for this operation!") into errorText
+      fedwiki_ExitAndReturnError errorText, "Transport Error"
+   end if
+   --
+   put listenNotes_FetchUpdatesPodcastPageArray (podcastID, pageTitle) into pageArray
+   fedwiki_ReturnPageArray pageArray
+end updateRecent
 
 on findPodcast
    put fedwiki_GetDroppedArray() into postedArray

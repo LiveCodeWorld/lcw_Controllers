@@ -25,9 +25,12 @@
    */
 
    command federation
+      start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Date.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
       start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
@@ -41,10 +44,7 @@
    */
    
    on index
-      put fedray_FetchRecentSites() into rosterText
-      put "Recent Federation Activity" & CR & CR before rosterText
-      put roster_ConstructPageArray (rosterText) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      federation_ReturnActivityRoster "Recent Federation Activity", "1 week"
    end index
 
 ?>

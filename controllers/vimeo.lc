@@ -1,0 +1,110 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The vimeo.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "test,thumbs,index,high,vimeo" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "vimeo.lc" below.
+   --
+   */
+
+   command vimeo
+      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
+      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Vimeo.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+   end vimeo
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      switch
+         case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
+            put vimeo_ConstructPageArray (vimeoID) into pageArray
+            break
+         default
+            put "This is not a Vimeo video. URL =" && droppedURL into errorText
+            put pageArray_Construct ("Error", errorText) into pageArray
+      end switch
+      --
+      fedwiki_ReturnPageArray pageArray
+   end index
+   
+   on high
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      switch
+         case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
+            put vimeo_ConstructPageArray (vimeoID, 6) into pageArray
+            break
+         default
+            put "This is not a Vimeo video. URL =" && droppedURL into errorText
+            put pageArray_Construct ("Error", errorText) into pageArray
+      end switch
+      --
+      fedwiki_ReturnPageArray pageArray
+   end high
+   
+   on thumbs
+      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      --
+      switch
+         case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
+            put pageArray_Construct ("Vimeo Thumbnails", "This video has the following thumbnails:") into pageArray
+            --
+            put vimeo_ListThumbnails (vimeoID) into thumbNailUrls
+            if thumbNailUrls is not empty then
+               pageArray_AddMarkDown pageArray, "# Thumbnails"
+               repeat for each line thumbNailUrl in thumbNailUrls
+                  pageArray_AddImage pageArray, thumbNailUrl
+               end repeat
+            end if
+            break
+         default
+            put "This is not a Vimeo video. URL =" && droppedURL into errorText
+            put pageArray_Construct ("Error", errorText) into pageArray
+      end switch
+      --
+      fedwiki_ReturnPageArray pageArray
+   end thumbs
+   
+   on test
+      /*   put rigFetchConfigItem ("VimeoApiKey") into vimeoApiKey
+      put "Vimeo URL =" && droppedURL into someMarkdown
+      put CR & "# VimeoApiKey" & CR after someMarkdown
+      put vimeoApiKey & CR after someMarkdown
+      */
+      
+      put vimeo_FetchVerifyAuthJson ("oauth/verify", true) into vimeoData
+      -- put vimeo_FetchVideoJSON (vimeoID) into vimeoData
+      --
+      if vimeoData is not an array then
+         put pageArray_Construct ("Error", vimeoData) into pageArray
+      else
+         put vimeoData ["name"] into vimeoTitle
+         put pageArray_Construct (vimeoTitle, someMarkdown) into pageArray
+      end if
+   end test
+
+?>

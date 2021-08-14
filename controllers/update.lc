@@ -1,0 +1,113 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The update.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "spam,createSite,addNew,atopia,recentSites,index,update" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "update.lc" below.
+   --
+   */
+
+   command update
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaCreation.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTrash.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Azure.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiSitemap.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Image.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Atopia.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_AtopiaFiles.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Fedray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Transport.livecodescript")
+   end update
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   on index
+      put atopia_ConstructCatModel() into atopiaCatModel
+      --
+      transport_StoreAtopiaCatModel atopiaCatModel
+      --
+      put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end index
+   
+   on atopia
+      atopia_TrashhAndUpdateModified
+      put the result into atopiaCatModel
+      --
+      put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end atopia
+   
+   on recentSites
+      put transport_FetchAtopiaCatModel() into atopiaCatModel
+      --
+      atopia_UpdateModified atopiaCatModel
+      --
+      put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end recentSites
+   
+   on addNew
+      -- put transport_FetchAtopiaCatModel() into atopiaCatModel
+      -- put atopiaCatModel ["new sites"] into newDomainArray
+      put atopia_ListNewCatFolders() into newAtopiaDomains
+      --
+      get "Below we list any new sites that have been created since the [[Last Update]] on the [[Atopia server]]:"
+      put pageArray_Construct ("New Sites", it) into pageArray
+      --
+      repeat for each line newDomain in newAtopiaDomains
+         put atopia_ConstructNewSiteButton (newDomain) into btnHTML
+         pageArray_AddHtml pageArray, btnHTML
+      end repeat
+      --
+      fedwiki_ReturnPageArray pageArray
+   end addNew
+   
+   on createSite
+      put "azuraye.goaljam.org" into newDomain
+      /*
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["wikiDomain"] into newDomain
+      */
+      --
+      put pageArray_FetchNewSite (newDomain) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end createSite
+   
+   on spam
+      put transport_FetchAtopiaCatModel() into atopiaCatModel
+      --
+      atopia_TrashSpam atopiaCatModel
+      --
+      put the result into pageArray
+      fedwiki_ReturnPageArray pageArray
+   end spam
+
+?>

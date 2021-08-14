@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "podcast,index,test,watson" into gControllerHandlers
+   put "podcast,index,watson" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,7 +25,7 @@
    */
 
    command watson
-      start using stack (gAPPPATH & "stacks/lib_DateTime.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Date.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Encoding.livecode")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_Feed.livecode")
@@ -43,16 +43,9 @@
    
    on index
       put "https://www.google.com/alerts/feeds/07925126973483736542/15837936957629622679" into rssURL
-      put rss_GetPageArray (rssURL, "Alzheimer's Feed", "cast.pod.club") into pageArray
+      put rss_GetPageArray (rssURL, empty, "Alzheimer's Feed", "cast.pod.club") into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
-   
-   on test
-      -- put "Test “in a Covid-secure way” using social distancing." into testText
-      put internet date into someMarkdown
-      put pageArray_Construct ("Test", someMarkdown) into pageArray
-      fedwiki_ReturnPageArray pageArray
-   end test
    
    on podcast
       put fedwiki_GetDroppedArray() into postedArray
@@ -61,14 +54,30 @@
       put postedArray ["pageTitle"] into pageTitle
       put postedArray ["rssLastUpdated"] into rssLastUpdated
       put postedArray ["displayStyle"] into displayStyle
-      
-      -- put "http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml" into rssURL
-      put "https://www.theguardian.com/uk/rss" into rssURL
+      --put _TestURL() into rssURL
+      -- put _TestDate() into rssLastUpdated
       if rssURL is empty then fedwiki_ExitAndReturnError "RSS url is empty!", "Problem with Import"
       --
-      put rss_GetPageArray (rssURL, pageTitle, wikiDomain, rssLastUpdated, displayStyle) into pageArray
-      -- 
+      put rss_GetPageArray (rssURL, rssLastUpdated, pageTitle, wikiDomain, displayStyle) into pageArray-- 
       fedwiki_ReturnPageArray pageArray
    end podcast
+   
+   function _TestURL
+      -- put "http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml" into rssURL
+      -- put "https://www.theguardian.com/uk/rss" into rssURL
+      put "http://feeds.wnyc.org/radiolab" into rssURL
+      return rssURL
+   end _TestURL
+   
+   function _TestDate
+      put "Thu, 8 Oct 2020 07:44:00 -0500" into rssLastUpdated
+      return rssLastUpdated
+      
+      put "Mon, 02 Nov 2020 07:44:00 -0500" into rssLastUpdated
+      convert rssLastUpdated to seconds
+      put date_GetSinceSeconds ("4 weeks", rssLastUpdated) into rssLastUpdated
+      convert rssLastUpdated to internet date
+      return rssLastUpdated
+   end _TestDate
 
 ?>

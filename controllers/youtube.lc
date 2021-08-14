@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "oldestFirst,recentBullets,oldestBullets,recentMarkdown,fetchAll,fetchThumb,vimeo,transport_Video,recentFirst,index,youtube" into gControllerHandlers
+   put "recentBullets,transport_Video,vimeo,recentFirst,fetchThumb,oldestFirst,fetchAll,recentMarkdown,oldestBullets,index,youtube" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -27,11 +27,10 @@
    command youtube
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Youtube.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Vimeo.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Scrape.livecode")
+      start using stack (gAPPPATH & "stacks/lib_Vimeo.livecodescript")
+      start using stack (gAPPPATH & "stacks/lib_Youtube.livecodescript")
       start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Secret.livecodescript")
    end youtube
    
 
@@ -43,10 +42,23 @@
    
    on index
       put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      set the itemdelimiter to "."
       switch
-         case item -1 of droppedURL is among the items of "mp4"
-            put "import a video" && droppedURL into someMarkdown
-            put pageArray_Construct ("Test", someMarkdown) into pageArray
+         case item -1 of droppedURL is among the items of "m4v.mp4.webm"
+            put item -1 of droppedURL into mType
+            switch mType
+               case "m4v"
+                  put "mp4" into mType
+                  break
+                  put  tolower (mType) into mType
+            end switch
+            
+            put "HTML5" && mType into videoType
+            set the itemdelimiter to slash
+            put item 3 of droppedURL into kWord
+            replace "www." with empty in kWord
+            put "Imported video" && "- [" & droppedURL && kWord & "]" into videoDescription
+            pageArray_AddVideo pageArray, droppedURL, videoType, videoDescription
             fedwiki_ReturnPageArray pageArray
             break
          case droppedURL begins with "https://www.youtube.com/"
@@ -62,6 +74,8 @@
             fedwiki_ReturnPageArray fedwikiPageArray
             break
          default
+            put pageArray_Construct ("Error", "The url was not a video url that i recognise!") into pageArray
+            fedwiki_ReturnPageArray pageArray
       end switch
    end index
    
@@ -182,10 +196,9 @@
             return someJSON
          case "watch"
             -- https://www.youtube.com/watch?v=nU4Ggyobi3k&index=6&list=PLPj3KCksGbSY-RaXfrGPnY8uEOl6uylky
-            delete item 1 of switchOrArray
-            split switchOrArray with "&" and "="
-            put switchOrArray ["v"] into videoID
+            -- https://www.youtube.com/watch?v=ElH0R__QMXk&t=50s
             
+            put youtube_GetVideoID (droppedURL) into videoID
             put youtube_FetchVideoPageJSON (videoID) into someJSON
             return someJSON
          case "channel"

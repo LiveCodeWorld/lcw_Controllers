@@ -1,20 +1,95 @@
 ﻿script "photo.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray"
+    return "lib_Curly,lib_Fedwiki,lib_HTML,lib_Image,lib_ImageMagick,lib_Map,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl() into droppedURL
+   transport_DropTest imageURL, srcImageURL, qEnd, isFavicon
+   put the result into imageAttributeArray
    --
-   put droppedURL into imageURL
-   put imageURL into captionLinkURL
-   --
-   put "Dropped Image" into pageTitle
-   put "This is a simple image dropped on to a wiki." into pageText
-   put empty into imageCaption
-   --
-   put fedwiki_ConstructNewPageArray (pageTitle, pageText) into pageArray
-   pageArray_AddImage pageArray, imageURL, imageCaption, captionLinkURL
+   switch 
+      case imageURL begins with "https://www.google.com/search?q="
+      case imageURL begins with "https://www.google.com/imgres?imgurl="
+         put pageArray_ConstructGoogleImagePage (imageURL) into pageArray
+         break
+      case srcImageURL is not empty
+         put pageArray_ConstructImageEditPage (srcImageURL, imageAttributeArray, true) into pageArray
+         break
+      default
+         -- put urldecode (imageURL) into imageURL
+         put pageArray_ConstructImageEditPage (imageURL, empty, false) into pageArray
+   end switch
    --
    fedwiki_ReturnPageArray pageArray
 end index
+
+on imageMetadata
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["imageURL"] into imageURL
+   -- put "https://www.zsl.org/sites/default/files/styles/wysiwyg/public/image/2014-01/Butterfly%2025.5.06%20115.jpg" into imageURL
+   --
+   put pageArray_ConstructMapAndImage (imageURL, "Image Metadata") into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end imageMetadata
+
+on charcoal
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["imageURL"] into imageURL
+   put postArray ["imageCaption"] into imageCaption
+   put postArray ["imageWidth"] into imageWidth
+   --
+   put imageMagick_FetchImageType (imageURL) into imageType
+   put imageMagick_GrayScale (imageURL, imageType) into someImage
+   put pageArray_ConstructEmbeddedImage (someImage, imageType, "Grayscale Image", imageWidth) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end charcoal
+
+on grayscale
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["imageURL"] into imageURL
+   put postArray ["imageCaption"] into imageCaption
+   put postArray ["imageWidth"] into imageWidth
+   --
+   put imageMagick_FetchImageType (imageURL) into imageType
+   put imageMagick_Charcoal (imageURL, imageType, 3) into someImage
+   put pageArray_ConstructEmbeddedImage (someImage, imageType, "Charcoal Image", imageWidth) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end grayscale
+
+on embedImage
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["imageURL"] into imageURL
+   put postArray ["imageCaption"] into imageCaption
+   put postArray ["imageWidth"] into imageWidth
+   --   
+   put imageMagick_FetchIdentity (imageURL) into identityInfo
+   put imageMagick_GetImageType (identityInfo) into imageType
+   --
+   -- put url imageURL into someImage
+   put imageMagick_Shrink (imageURL, imageWidth, imageWidth) into someImage
+   put pageArray_ConstructEmbeddedImage (someImage, imageType, imageCaption, imageWidth) into pageArray
+   --
+   pageArray_AddPagefold pageArray, "Metadata"
+   pageArray_AddCode pageArray, identityInfo
+   --
+   fedwiki_ReturnPageArray pageArray
+end embedImage
+
+function pageArray_ConstructEmbeddedImage someImage, imageType, imageCaption, imageWidth
+   put "Embedded Image" into pageTitle
+   --
+   put pageTitle into pageArray ["title"]
+   put pageArray_ConstructJournal (pageTitle) into pageArray ["journal"] 
+   --
+   pageArray_AddEmbeddedImage pageArray, someImage, imageCaption, imageType
+   --
+   put "This is a [[base64 encoded image]] that has been emedded into the the [[wiki-page]]." into someMarkdown
+   put CR&CR & "This [[ghost-page]] has not been saved yet." after someMarkdown
+   put "You can drag the image to another page (or fork this page) to save a permanent snapshot of this image to wiki." after someMarkdown
+   pageArray_AddMarkdown pageArray, someMarkdown
+   --
+   return pageArray
+end pageArray_ConstructEmbeddedImage

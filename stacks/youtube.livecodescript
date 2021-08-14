@@ -7,8 +7,16 @@ on index
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
    set the itemdelimiter to "."
    switch
-      case item -1 of droppedURL is among the items of "mp4.webm"
-         put "HTML5" && item -1 of droppedURL into videoType
+      case item -1 of droppedURL is among the items of "m4v.mp4.webm"
+         put item -1 of droppedURL into mType
+         switch mType
+            case "m4v"
+               put "mp4" into mType
+               break
+               put  tolower (mType) into mType
+         end switch
+         
+         put "HTML5" && mType into videoType
          set the itemdelimiter to slash
          put item 3 of droppedURL into kWord
          replace "www." with empty in kWord
@@ -151,10 +159,9 @@ function youtube_ParseDropUrl droppedURL
          return someJSON
       case "watch"
          -- https://www.youtube.com/watch?v=nU4Ggyobi3k&index=6&list=PLPj3KCksGbSY-RaXfrGPnY8uEOl6uylky
-         delete item 1 of switchOrArray
-         split switchOrArray with "&" and "="
-         put switchOrArray ["v"] into videoID
+         -- https://www.youtube.com/watch?v=ElH0R__QMXk&t=50s
          
+         put youtube_GetVideoID (droppedURL) into videoID
          put youtube_FetchVideoPageJSON (videoID) into someJSON
          return someJSON
       case "channel"

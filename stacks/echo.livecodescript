@@ -1,12 +1,11 @@
 ﻿script "echo.lc"
 getprop dep_StackNames
-    return "lib_Fedwiki,lib_PageArray,model_PageArray"
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
    put _ConstructTestText() into someMarkdown
    -- put fedray_FetchDomains ("voz.money") into rosterDomains
-   
    put $_SERVER into tServerArray
    put tServerArray ["PATH_TRANSLATED"] into pathTranslated
    -- combine tServerArray using CR and space -- makes a list for presenting
@@ -37,8 +36,8 @@ on index
    put CR after someMarkdown
    put "Hello world!" && the ticks into url ("file:" & textPath)
    
-   -- put keys (tServerArray) & CR after someMarkdown
-   -- put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
+   put keys (tServerArray) & CR after someMarkdown
+   put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
    --
    put pageArray_Construct ("Echo", someMarkdown) into pageArray
    fedwiki_ReturnPageArray pageArray

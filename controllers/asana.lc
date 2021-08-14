@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,user,asana" into gControllerHandlers
+   put "user,index,asana" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,12 +25,10 @@
    */
 
    command asana
-      start using stack (gAPPPATH & "stacks/lib_Asana.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_REST.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Secret.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_REST.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end asana
    
 
@@ -91,29 +89,29 @@
       --
       put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
       --
+      put asana_FetchMyTaskMarkdown ("deip.world") into taskMarkdown
+      --
+      /*
       put asana_FetchUserData (userID) into responseArray
       asana_DeconstructUserData responseArray, userName, userEmail, userPhotoArray, userWorkspaceArray
       put asana_FetchUserPhotoUrl (userPhotoArray) into photoURL
       --
       put CR after someStuff
+      put CR & taskNames after someStuff
+      put CR after someStuff
       put CR & userName & CR & userEmail & CR & photoURL after someStuff
+      */
       --
-      pageArray_SetItemText pageArray, itemID, someStuff
+      pageArray_SetItemText pageArray, itemID, taskMarkdown
       pageArray_StripJournal pageArray
-      pageArray_AddFork pageArray, "sites.fedwiki.org"
+      -- pageArray_AddFork pageArray, "sites.fedwiki.org"
       --
       fedwiki_ReturnPageArray pageArray   
    end user
    
    command _SetSomeStuff @wikiDomain, @pageSlug, @itemID, @userID
-      /*
-      put "14716884063745" into userID
-      put "01283dba64396805" into itemID
-      put "david-bovill" into pageSlug
-      put "meet.thought.garden" into wikiDomain
-      */
-      
       put fedwiki_GetDroppedArray() into postArray
+      --
       put postArray ["wikiDomain"] into wikiDomain
       put postArray ["pageSlug"] into pageSlug
       put postArray ["itemID"] into itemID

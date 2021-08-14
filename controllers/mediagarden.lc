@@ -28,6 +28,9 @@
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
    end mediagarden
    
 
@@ -38,8 +41,7 @@
    */
    
    on index
-      put roster_FetchLivePageArray ("mediagarden.org") into pageArray
-      fedwiki_ReturnPageArray pageArray
+      roster_ReturnPageArray "mediagarden.org"
    end index
 
 ?>

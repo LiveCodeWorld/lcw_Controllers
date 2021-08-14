@@ -1,22 +1,7 @@
 ﻿script "asana.lc"
 getprop dep_StackNames
-   return "lib_Asana,lib_Fedwiki,lib_PageArray,lib_REST,model_Fedwiki,model_Secret"
+    return "lib_Asana,lib_Fedwiki,lib_PageArray,lib_REST,model_PageArray"
 end dep_StackNames
-
-getprop test_RawJSON
-   put the test_PostArray of me into postArray
-   put json_FromArray (postArray) into rawJSON
-   return rawJSON
-end test_RawJSON
-
-getprop test_PostArray
-   put "14716884063745" into postArray ["userID"]
-   put "01283dba64396805" into postArray ["itemID"]
-   put "david-bovill" into postArray ["pageSlug"]
-   put "meet.thought.garden" into postArray ["wikiDomain"]
-   --
-   return postArray
-end test_PostArray
 
 on index
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
@@ -90,11 +75,7 @@ on user
 end user
 
 command _SetSomeStuff @wikiDomain, @pageSlug, @itemID, @userID
-   if the environment is not "server" then
-      put the test_PostArray of me into postArray
-   else
-      put fedwiki_GetDroppedArray() into postArray
-   end if
+   put fedwiki_GetDroppedArray() into postArray
    --
    put postArray ["wikiDomain"] into wikiDomain
    put postArray ["pageSlug"] into pageSlug

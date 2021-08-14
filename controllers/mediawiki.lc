@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "wikipage,importSection,favicon,index,section,form,mediawiki" into gControllerHandlers
+   put "importSection,favicon,wikipage,form,index,section,mediawiki" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,20 +25,20 @@
    */
 
    command mediawiki
-      start using stack (gAPPPATH & "stacks/lib_Curly.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Encoding.livecode")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedWikiPedia.livecode")
-      start using stack (gAPPPATH & "stacks/lib_MediaWiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Text.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_WikiCommons.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_WikiPageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_WikiRestBase.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_WikiSandbox.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_WikiVideo.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Xkcd.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Curly.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Encoding.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedWikiPedia.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Map.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_MediaWiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_WikiCommons.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_WikiPageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_WikiRestBase.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_WikiSandbox.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_WikiVideo.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Xkcd.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end mediawiki
    
 
@@ -73,7 +73,11 @@
          case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
          case matchText (droppedText, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
          case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-            wikipage droppedURL
+            wikipage
+            break
+         case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
+            -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
+            wikipage
             break
          case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.ogg)", shortAudioFile)
             put "An audio from the commons..." into someText
@@ -98,52 +102,32 @@
             thumbNail droppedHtml
             break
          default
-            fedwiki_ForwardAndReturn "https://rest.livecode.world/echo"
+            put pageArray_Construct ("Error", "Not a mediawiki site I recognise!") into pageArray
+            fedwiki_ReturnPageArray pageArray
       end switch
    end index
    
    on wikipage
       put fedwiki_GetDroppedUrl() into droppedURL
-      switch
-         case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
-            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://www.gameb.wiki/api.php?", droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
-            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break  
-         case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
-            put xkcd_FetchPageArray (droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
-            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://rationalwiki.org/w/api.php?", droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
-            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://en.bitcoin.it/w/api.php?", droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
-            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://sterbalssundrystudies.miraheze.org/w/api.php?", droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-            put mediawiki_FetchPageArray (droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-            break
-         default
-            put pageArray_Construct ("Not a Wikipedia page!", "Not a Wikipedia page!" && droppedURL) into pageArray
-            fedwiki_ReturnPageArray pageArray
-      end switch
+      put _GetPageArray (droppedURL) into pageArray
+      fedwiki_ReturnPageArray pageArray
    end wikipage
    
    on form
       put fedwiki_GetDroppedArray() into postedArray
       put postedArray ["title"] into pageTitle
+      put postedArray ["url"] into postedURL
       --
-      put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
+      switch
+         case postedURL is not empty
+            put _GetPageArray (postedURL) into pageArray
+            break
+         case pageTitle is not empty
+            put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
+            break
+         default
+            put pageArray_Construct ("Error", "Failed to post a wikipedia url or title to form!") into pageArray
+      end switch
       --
       fedwiki_ReturnPageArray pageArray
    end form
@@ -201,5 +185,38 @@
       --
       fedwiki_ReturnJSON pageJSON
    end thumbNail
+   
+   private function _GetPageArray droppedURL
+      switch
+         case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
+            -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://meta.wikimedia.org/w/api.php?", droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://www.gameb.wiki/api.php?", droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "http://wiki.p2pfoundation.net/(.+)", wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "http://wiki.p2pfoundation.net/api.php?", droppedURL) into pageArray
+            break  
+         case matchText (droppedURL, "https://www.explainxkcd.com/wiki/index.php/(.+)", wikiSlug)
+            put xkcd_FetchPageArray (droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "https://rationalwiki.org/wiki/(.+)", wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://rationalwiki.org/w/api.php?", droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://en.bitcoin.it/w/api.php?", droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
+            put mediawiki_FetchPageArrayWithParse (wikiSlug, empty, "https://sterbalssundrystudies.miraheze.org/w/api.php?", droppedURL) into pageArray
+            break
+         case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
+            put mediawiki_FetchPageArray (droppedURL) into pageArray
+            break
+         default
+            put pageArray_Construct ("Not a Wikipedia page!", "Not a Wikipedia page!" && droppedURL) into pageArray
+      end switch
+      return pageArray
+   end _GetPageArray
 
 ?>

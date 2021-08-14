@@ -1,0 +1,14 @@
+<?rev
+
+# PUT YOUR HANDLER NAMES  INTO THE GLOBAL gControllerHandlers AS A COMMA SEPARATED LIST
+put "index" into gControllerHandlers
+
+command index
+   rigLoadHelper "asset"
+
+   put "pics" into tArray["class"]
+   put "My Portrait" into tArray["alt"]
+   put rigImageAsset("david.jpg", tArray) into gData["myPic"]
+
+	get rigLoadView("blogview")
+end index

@@ -1,6 +1,6 @@
 ﻿script "roster.lc"
 getprop dep_StackNames
-   return "lib_AtopiaTree,lib_Curly,lib_Date,lib_Fedray,lib_Fedwiki,lib_FedwikiCreate,lib_FedwikiRoster,lib_GoogleCustomSearch,lib_PageArray,lib_Transport,model_Atopia,model_AtopiaAuthors,model_Federation,model_Fedray,model_PageArray"
+   return "lib_AtopiaTree,lib_Curly,lib_Date,lib_Fedwiki,lib_FedwikiCreate,lib_FedwikiRoster,lib_GoogleCustomSearch,lib_PageArray,lib_Transport,model_Atopia,model_AtopiaAuthors,model_Federation,model_Fedray,model_PageArray"
 end dep_StackNames
 
 on index 
@@ -27,6 +27,32 @@ on atopiaSites
    transport_SetFormTitleDomain wikiDomain, pageTitle
    atopia_ReturnSitesPageArray wikiDomain, pageTitle
 end atopiaSites
+
+on transportSites
+   /*
+   put "https://rest.livecode.world/festival" into tURL
+   put "Festival Jam Sites" into pageTitle
+   put "festivaljam.org" into wikiDomain
+   */
+   --
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["transport"] into tURL
+   put postArray ["pageTitle"] into pageTitle
+   put postArray ["wikiDomain"] into wikiDomain
+   if wikiDomain is empty then
+      set the itemdelimiter to slash
+      put item 3 of $HTTP_REFERER into wikiDomain
+   end if
+   --
+   put url tURL into pageJSON
+   put json_ToArray (pageJSON) into pageArray
+   put pageArray_GetFirstRoster (pageArray) into rosterDomains
+   roster_StripHeader rosterDomains
+   --
+   put roster_ConstructSitesPageArray (wikiDomain, rosterDomains, pageTitle) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end transportSites
 
 on subdomain
    transport_SetFormSlugDomain wikiDomain, pageSlug
@@ -82,9 +108,10 @@ on tsv
    put postArray ["minPageNum"] into minPageNum
    put postArray ["cseID"] into cseID
    --
-   put atopia_FetchFedrayDomains (minPageNum) into atopiaDomains
-   roster_DomainFilter atopiaDomains, wikiDomain
-   put cse_ConstructTSV (atopiaDomains, cseID) into federationTSV
+   -- put atopia_ListWelcomeFolders (wikiDomain) into atopiaDomains
+   put federation_ListDomains (wikiDomain) into wikiDomains
+   --
+   put cse_ConstructTSV (wikiDomains, cseID) into federationTSV
    --
    put pageArray_Construct ("Federation TSV", federationTSV) into pageArray
    fedwiki_ReturnPageArray pageArray

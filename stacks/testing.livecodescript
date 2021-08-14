@@ -1,6 +1,6 @@
 ﻿script "testing.lc"
 getprop dep_StackNames
-   return "lib_AtopiaFetch,lib_Fedwiki,lib_PageArray,lib_URL"
+    return "lib_Fedwiki,lib_PageArray,model_Fedray,model_PageArray"
 end dep_StackNames
 
 on index

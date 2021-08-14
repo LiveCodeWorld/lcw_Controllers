@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,today" into gControllerHandlers
+   put "archive,index,today" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,15 +25,16 @@
    */
 
    command today
-      start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Date.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Date.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Transport.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Atopia.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Federation.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Fedray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end today
    
 
@@ -46,5 +47,23 @@
    on index
       federation_ReturnActivityRoster "Todays Activity", "1 day"
    end index
+   
+   on archive
+      put transport_GetFormDomain() into wikiDomain
+      --
+      put pageArray_Fetch (wikiDomain, "today") into pageArray
+      put pageArray_GetLastEdit (pageArray) into dayTitle
+      convert dayTitle to long date
+      delete item 1 of dayTitle
+      --
+      pageArray_Rename pageArray, dayTitle
+      --
+      -- here we could store dayTitle page and return blank Today page.
+      fedwiki_ReturnPageArray pageArray
+   end archive
+   
+   function pageArray_GetLastEdit pageArray
+      return the seconds
+   end pageArray_GetLastEdit
 
 ?>

@@ -1,6 +1,6 @@
 ﻿script "google.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,lib_Google"
+   return "lib_Fedwiki,lib_Google,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index

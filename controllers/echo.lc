@@ -25,9 +25,9 @@
    */
 
    command echo
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end echo
    
 
@@ -40,7 +40,6 @@
    on index
       put _ConstructTestText() into someMarkdown
       -- put fedray_FetchDomains ("voz.money") into rosterDomains
-      
       put $_SERVER into tServerArray
       put tServerArray ["PATH_TRANSLATED"] into pathTranslated
       -- combine tServerArray using CR and space -- makes a list for presenting
@@ -54,15 +53,25 @@
       
       put cgi_TextPath ("hello.txt") into filePath
       put url ("file:" & filePath) into someText
+      put CR after someMarkdown
       
-      put CR & "# Hello World" after someMarkdown
+      put "# gRoute" & CR after someMarkdown
+      put the keys of gRoute & CR after someMarkdown
+      put gRoute[2]["journals"] & CR after someMarkdown
+      put the keys of gRoute[3] & CR after someMarkdown
+      
+      put "# Hello World" & CR after someMarkdown
       put someText & CR after someMarkdown
       
+      -- put CR & "# Headers" after someMarkdown
+      -- put libUrlLastRhHeaders() & CR after someMarkdown
+      
       -- now write to database
+      put CR after someMarkdown
       put "Hello world!" && the ticks into url ("file:" & textPath)
       
-      -- put keys (tServerArray) & CR after someMarkdown
-      -- put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
+      put keys (tServerArray) & CR after someMarkdown
+      put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
       --
       put pageArray_Construct ("Echo", someMarkdown) into pageArray
       fedwiki_ReturnPageArray pageArray

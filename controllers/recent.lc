@@ -1,8 +1,9 @@
 <?lc
    /* =  DESCRIPTION  =
    --
-   The recent.lc controller can be found at: recent.lc
+   The recent.lc controller can be found at: echo.lc
    Here is some test help
+
    Below we declare the global variables gControllerHandlers AND gData
    And put the public method names that we wish to expose into gControllerHandlers
    --
@@ -10,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "index,recent" into gControllerHandlers
+   put "index,author,recent" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -24,11 +25,13 @@
    */
 
    command recent
+      start using stack (gAPPPATH & "stacks/lib_Federation.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_AtopiaAuthors.livecodescript")
       start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
    end recent
    
 
@@ -39,10 +42,21 @@
    */
    
    on index
-      put federation_FetchLiveRecentDomains() into domainNames
-      put "Recent Federation Activity" & CR & CR & domainNames into strippedRosterText
-      put roster_ConstructPageArray (strippedRosterText) into pageArray
+      put federation_FetchRecentAtopia() into atopiaDomains  
+      put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
+      put roster_ConstructPageArray (rosterText) into pageArray
       fedwiki_ReturnPageArray pageArray
    end index
+   
+   on author
+      put rigFetchSegment(3, "") into authorName
+      -- put "david-bovill" into authorName
+      replace "-" with space in authorName
+      --
+      put author_ListRecentSites (authorName) into thisWeeksAuthorDomains
+      put author_ConstructRecentPageArray (authorName, thisWeeksAuthorDomains) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end author
 
 ?>

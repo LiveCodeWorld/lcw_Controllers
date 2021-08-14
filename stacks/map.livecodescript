@@ -10,6 +10,10 @@ on index
    -- put "https://www.openstreetmap.org/?mlat=51.178844&mlon=-1.826189&zoom=15#map=15/51.1788/-1.8262" into droppedURL
    --
    switch
+      case matchtext (droppedURL, "^https://geohack.toolforge.org/geohack.php\?pagename=(.+)&params=(.+)", pageName, geoInfo)
+         -- https://geohack.toolforge.org/geohack.php?pagename=Tinker%27s_Bubble&params=50_56_N_2_44_W_
+         wmflabs_ReturnPageArray pageName, geoInfo
+         break
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
          put openStreetMap_FetchWikipediaMapPageArray (wikiSlug) into pageArray
          fedwiki_ReturnPageArray pageArray
@@ -17,9 +21,6 @@ on index
       case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
          put openStreetMap_FetchWikipediaMapPageArray (pageTitle) into pageArray
          fedwiki_ReturnPageArray pageArray
-         break
-      case matchtext (droppedURL, "^https://tools.wmflabs.org/geohack/geohack.php\?pagename=(.+)&params=(.+)", pageName, geoInfo)
-         wmflabs_ReturnPageArray pageName, geoInfo
          break
       case droppedURL begins with "http://www.openstreetmap.org/"
       case droppedURL begins with "https://www.openstreetmap.org/"
@@ -29,7 +30,15 @@ on index
       case droppedURL begins with "https://www.google.com/maps/place/"
          googleMaps_ReturnPageArray droppedURL
          break
+      case item 2 of droppedURL = "googleusercontent"
+         put pageArray_ConstructMapAndImage (droppedURL) into pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
+      case item -1 of droppedURL is among the items of "jpg.jpeg.png.giff"
+         put pageArray_ConstructMapAndImage (droppedURL) into pageArray
+         fedwiki_ReturnPageArray pageArray
+         break
       default
-         geoImage_ReturnPageArray
+         fedwiki_ExitAndReturnError "Nothing dropped", "Error"
    end switch
 end index

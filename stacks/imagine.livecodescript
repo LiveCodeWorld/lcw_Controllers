@@ -1,14 +1,24 @@
 ﻿script "imagine.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-   return "lib_Fedwiki,lib_PageArray,model_PageArray"
+    return "lib_Fedwiki"
 end dep_StackNames
 
-on index
-   fedwiki_SetRawJSON dropJSON
-   put fedwiki_GetDroppedUrl() into droppedURL
-   put url_FileEnding (droppedURL) into qEnd
+on index   
+   transport_DropTest droppedURL, srcImageURL, qEnd, isFavicon
+   put the result into resultArray
+   --
    switch
-      case fedwiki_IsFaviconDrop (dropJSON)
+      /*
+      case matchtext (droppedURL, "https://matrix.org/_matrix/media/v1/download/matrix.org/(.+)", matrixAssetID)
+      case matchText (droppedURL, "http://britishlibrary.typepad.co.uk/.a/(.+)", assetID)
+      case matchText (droppedURL, "https://static.+.squarespace.com/static/.+", photoID)
+         fedwiki_ForwardAndReturn "http://home.c2.com:4010/image"
+         break
+         */
+      case matchText (droppedURL, "https://www.one-tab.com/page/(.+)", oneTabID)
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/onetab"
+         break
+      case isFavicon
          fedwiki_ForwardAndReturn "https://rest.livecode.world/flag"
          break
       case droppedURL begins with "https://www.listennotes.com/podcasts/"
@@ -46,12 +56,6 @@ on index
       case matchText (droppedURL, "https://app.asana.com/0/(.+)/(.+)", projectID, taskID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/asana"
          break
-      case qEnd is among the items of "mp4,webm"
-      case droppedURL begins with "https://www.youtube.com/"
-      case droppedURL begins with "https://vimeo.com/"
-      case droppedURL begins with "https://www.ted.com/talks/"
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/youtube"
-         break
       case droppedURL begins with "https://audioboom.com/posts/"
          fedwiki_ForwardAndReturn "https://rest.livecode.world/audioboom"
          break
@@ -59,16 +63,17 @@ on index
       case droppedURL begins with "https://www.openstreetmap.org/"
       case droppedURL begins with "https://www.google.co.uk/maps/place/"
       case droppedURL begins with "https://www.google.com/maps/place/"
-      case matchtext (droppedURL, "^https://tools.wmflabs.org/geohack/geohack.php\?pagename=(.+)&params=(.+)", pageName, geoInfo)
+      case matchtext (droppedURL, "^https://geohack.toolforge.org/geohack.php\?pagename=(.+)&params=(.+)", pageName, geoInfo)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/map"
          break
-      case matchText (droppedURL, "https://www.one-tab.com/page/(.+)", oneTabID)
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/onetab"
+      case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
+         -- case droppedURL begins with "https://vimeo.com/"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/vimeo"
          break
-      case matchtext (droppedURL, "https://matrix.org/_matrix/media/v1/download/matrix.org/(.+)", matrixAssetID)
-      case matchText (droppedURL, "http://britishlibrary.typepad.co.uk/.a/(.+)", assetID)
-      case matchText (droppedURL, "https://static.+.squarespace.com/static/.+", photoID)
-         fedwiki_ForwardAndReturn "http://home.c2.com:4010/image"
+      case qEnd is among the items of "mp4,webm,m4v"
+      case droppedURL begins with "https://www.youtube.com/"
+      case droppedURL begins with "https://www.ted.com/talks/"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/youtube"
          break
       case matchText (droppedURL, "https://www.pinterest.com/pin/(.+)/|https://www.pinterest.co.uk/pin/(.+)/", photoID)
          fedwiki_ForwardAndReturn "https://rest.livecode.world/pinterest"
@@ -79,14 +84,14 @@ on index
       case qEnd is among the items of "jpg,jpeg,png,gif,webp,svg"
          fedwiki_ForwardAndReturn "https://rest.livecode.world/photo"
          break
-      case matchText (droppedURL, "https://twitter.com/.+/status/.+")
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/twitter"
-         break
       case droppedURL begins with "https://www.google.com/imgres?imgurl="
       case droppedURL begins with "https://www.google.co.uk/imgres?imgurl="
          fedwiki_ForwardAndReturn "https://rest.livecode.world/google"
          break
+      case matchText (droppedURL, "https://twitter.com/.+/status/.+")
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/twitter"
+         break
       default
-         fedwiki_ForwardAndReturn "https://rest.livecode.world/scrape"
+         fedwiki_ForwardAndReturn "https://rest.livecode.world/scrape/htmlPage"
    end switch
 end index

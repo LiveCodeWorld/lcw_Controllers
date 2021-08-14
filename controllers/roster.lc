@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "atopiaSites,refs,federation,domain,update,tsv,list,index,sites,author,cat,activity,subdomain,roster" into gControllerHandlers
+   put "transportSites,refs,atopiaSites,activity,sites,federation,domain,subdomain,update,list,index,tsv,author,cat,roster" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -28,7 +28,6 @@
       start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Curly.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Date.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedray.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
       start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
       start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
@@ -65,14 +64,40 @@
    end index
    
    on sites
-      put transport_GetFormDomain() into wikiDomain
-      federation_ReturnSitesPageArray wikiDomain
+      transport_SetFormTitleDomain wikiDomain, pageTitle
+      federation_ReturnSitesPageArray wikiDomain, pageTitle
    end sites
    
    on atopiaSites
-      put transport_GetFormDomain() into wikiDomain
-      atopia_ReturnSitesPageArray wikiDomain
+      transport_SetFormTitleDomain wikiDomain, pageTitle
+      atopia_ReturnSitesPageArray wikiDomain, pageTitle
    end atopiaSites
+   
+   on transportSites
+      /*
+      put "https://rest.livecode.world/festival" into tURL
+      put "Festival Jam Sites" into pageTitle
+      put "festivaljam.org" into wikiDomain
+      */
+      --
+      put fedwiki_GetDroppedArray() into postArray
+      put postArray ["transport"] into tURL
+      put postArray ["pageTitle"] into pageTitle
+      put postArray ["wikiDomain"] into wikiDomain
+      if wikiDomain is empty then
+         set the itemdelimiter to slash
+         put item 3 of $HTTP_REFERER into wikiDomain
+      end if
+      --
+      put url tURL into pageJSON
+      put json_ToArray (pageJSON) into pageArray
+      put pageArray_GetFirstRoster (pageArray) into rosterDomains
+      roster_StripHeader rosterDomains
+      --
+      put roster_ConstructSitesPageArray (wikiDomain, rosterDomains, pageTitle) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end transportSites
    
    on subdomain
       transport_SetFormSlugDomain wikiDomain, pageSlug
@@ -103,7 +128,7 @@
       -- put "voz.money" into wikiDomain
       --
       put fedray_FetchDomains (wikiDomain) into rosterDomains
-      put roster_ConstructSitesPageArray (wikiDomain, rosterDomains) into pageArray
+      put roster_ConstructSitesPageArray (wikiDomain, rosterDomains, pageTitle) into pageArray
       --
       fedwiki_ReturnPageArray pageArray
    end federation
@@ -128,9 +153,10 @@
       put postArray ["minPageNum"] into minPageNum
       put postArray ["cseID"] into cseID
       --
-      put atopia_FetchFedrayDomains (minPageNum) into atopiaDomains
-      roster_DomainFilter atopiaDomains, wikiDomain
-      put cse_ConstructTSV (atopiaDomains, cseID) into federationTSV
+      -- put atopia_ListWelcomeFolders (wikiDomain) into atopiaDomains
+      put federation_ListDomains (wikiDomain) into wikiDomains
+      --
+      put cse_ConstructTSV (wikiDomains, cseID) into federationTSV
       --
       put pageArray_Construct ("Federation TSV", federationTSV) into pageArray
       fedwiki_ReturnPageArray pageArray
