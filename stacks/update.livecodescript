@@ -46,15 +46,13 @@ on addNew
 end addNew
 
 on createSite
-   if the environment = server then
-      put fedwiki_GetDroppedArray() into postArray
-      put postArray ["wikiDomain"] into newDomain
-   else
-      put "azuraye.goaljam.org" into newDomain
-   end if
+   put "azuraye.goaljam.org" into newDomain
+   /*
+   put fedwiki_GetDroppedArray() into postArray
+   put postArray ["wikiDomain"] into newDomain
+   */
    --
    put pageArray_FetchNewSite (newDomain) into pageArray
-   atopia_AddNewDomainToFedrays newDomain
    --
    fedwiki_ReturnPageArray pageArray
 end createSite
