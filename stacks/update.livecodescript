@@ -45,7 +45,7 @@ on addNew
    fedwiki_ReturnPageArray pageArray
 end addNew
 
-on createSite
+private command createSite
    put "azuraye.goaljam.org" into newDomain
    /*
    put fedwiki_GetDroppedArray() into postArray
