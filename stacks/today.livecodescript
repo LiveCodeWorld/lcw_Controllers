@@ -1,6 +1,6 @@
 ﻿script "today.lc"
 getprop dep_StackNames
-   return "lib_AtopiaTree,lib_Date,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_Transport,model_Atopia,model_Federation,model_Fedray,model_PageArray"
+   return "lib_AtopiaTree,lib_Date,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_Transport,model_Atopia,model_Federation,model_PageArray,model_Transport"
 end dep_StackNames
 
 on index
@@ -11,9 +11,7 @@ on archive
    put transport_GetFormDomain() into wikiDomain
    --
    put pageArray_Fetch (wikiDomain, "today") into pageArray
-   put pageArray_GetLastEdit (pageArray) into dayTitle
-   convert dayTitle to long date
-   delete item 1 of dayTitle
+   put _GetPageTitle() into dayTitle
    --
    pageArray_Rename pageArray, dayTitle
    --
@@ -21,6 +19,8 @@ on archive
    fedwiki_ReturnPageArray pageArray
 end archive
 
-function pageArray_GetLastEdit pageArray
-   return the seconds
-end pageArray_GetLastEdit
+private function _GetPageTitle
+   put the long date into dayTitle
+   delete item 1 of dayTitle
+   return dayTitle
+end _GetPageTitle

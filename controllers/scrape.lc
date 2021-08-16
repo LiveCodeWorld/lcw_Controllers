@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "htmlPage,index,scrape" into gControllerHandlers
+   put "index,htmlPage,scrape" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,17 +25,18 @@
    */
 
    command scrape
-      start using stack (gAPPPATH & "stacks/lib_Citation.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Curly.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_HTML.livecode")
-      start using stack (gAPPPATH & "stacks/lib_ImageMagick.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Map.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_REST.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Scrape.livecode")
-      start using stack (gAPPPATH & "stacks/lib_Transport.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      rigLoadStack "lib_Audioboom"
+      rigLoadStack "lib_Citation"
+      rigLoadStack "lib_Curly"
+      rigLoadStack "lib_Fedwiki"
+      rigLoadStack "lib_HTML"
+      rigLoadStack "lib_ImageMagick"
+      rigLoadStack "lib_Map"
+      rigLoadStack "lib_PageArray"
+      rigLoadStack "lib_REST"
+      rigLoadStack "lib_Scrape"
+      rigLoadStack "lib_Transport"
+      rigLoadStack "model_PageArray"
    end scrape
    
 
@@ -57,8 +58,7 @@
       put transport_ConstructUpdatePageArray (lastUpdatedSeconds, postArray) into pageArray
       transport_StorePageArray pageArray
       put the result into tResult
-      put tResult
-      /*
+      --
       if item 1 of tResult is "error" then
          put pageArray_Construct ("Bad", tResult) into responseArray
       else
@@ -66,7 +66,6 @@
       end if
       pageArray_AddMarkdown responseArray, "That is all for now. We will return more useful data here at a later date."
       fedwiki_ReturnPageArray responseArray
-      */
    end index
    
    on htmlPage

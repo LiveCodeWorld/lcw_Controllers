@@ -1,0 +1,24 @@
+<?lc
+
+put "index,hello_write" into gControllerHandlers
+
+
+command hello_write
+  start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+  start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+  start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
+  start using stack (gRigA["APPPATH"] & "stacks/model_Transport.livecodescript")
+end hello_write
+
+command index
+   # MAKE SURE THAT THE CONTROLLER IS ONLY ACCESSIBLE VIA COMMAND LINE
+   if $_SERVER["PATH_TRANSLATED"] <> empty then
+      put "This script can only be accessed via the command line."
+      exit to top
+   end if
+   
+   put the time into timeModel ["time"]
+   transport_SetModel "Clock Model", timeModel
+   
+   put "Hello" && timeModel ["time"] & CR
+end index

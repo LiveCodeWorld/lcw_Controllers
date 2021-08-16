@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "auth,listModels,deleteShortModelFile,writeModel,deleteModel,list,index,atopia" into gControllerHandlers
+   put "auth,deleteModel,deleteShortModelFile,writeModel,listModels,list,index,atopia" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==

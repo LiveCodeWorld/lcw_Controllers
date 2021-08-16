@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "transportSites,refs,atopiaSites,activity,sites,federation,domain,subdomain,update,list,index,tsv,author,cat,roster" into gControllerHandlers
+   put "atopiaSites,transportSites,refs,activity,sites,domain,federation,subdomain,list,index,tsv,update,author,cat,roster" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -25,20 +25,20 @@
    */
 
    command roster
-      start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Curly.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Date.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiCreate.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_GoogleCustomSearch.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Transport.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Atopia.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_AtopiaAuthors.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Federation.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Curly.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Date.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiCreate.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_GoogleCustomSearch.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Transport.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Atopia.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_AtopiaAuthors.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Federation.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Fedray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end roster
    
 

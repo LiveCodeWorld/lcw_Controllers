@@ -25,13 +25,13 @@
    */
 
    command thought
-      start using stack (gAPPPATH & "stacks/lib_AtopiaTree.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiSitemap.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_Fedwiki.livecodescript")
-      start using stack (gAPPPATH & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiSitemap.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Fedwiki.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
    end thought
    
 

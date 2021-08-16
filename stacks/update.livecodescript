@@ -1,6 +1,6 @@
 ﻿script "update.lc"
 getprop dep_StackNames
-   return "lib_AtopiaCreation,lib_AtopiaTrash,lib_AtopiaTree,lib_Azure,lib_Fedwiki,lib_FedwikiSitemap,lib_Image,lib_PageArray,model_Atopia,model_AtopiaFiles,model_Fedray,model_PageArray,model_Transport"
+   return "lib_AtopiaCreation,lib_AtopiaTrash,lib_AtopiaTree,lib_Fedwiki,lib_FedwikiSitemap,lib_PageArray,lib_REST,model_Atopia,model_AtopiaCreate,model_AtopiaFiles,model_PageArray,model_Transport,model_WikiSitePage"
 end dep_StackNames
 
 on index
@@ -11,6 +11,17 @@ on index
    put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
    fedwiki_ReturnPageArray pageArray
 end index
+
+on trashAndIndex
+   put atopia_ConstructCatModel() into atopiaCatModel
+   atopia_TrashAndIndex atopiaCatModel
+   put the result into statusData
+   put statusData ["trashAndIndexTime"] into trashAndIndexTime
+   --
+   put "Trashing and indexing the Atoppia Server took:" && trashAndIndexTime into someMarkdown
+   put pageArray_Construct ("Fedray Update Report", someMarkdown) into pageArray
+   fedwiki_ReturnPageArray pageArray
+end trashAndIndex
 
 on atopia
    atopia_TrashAndUpdateModified
@@ -44,18 +55,6 @@ on addNew
    --
    fedwiki_ReturnPageArray pageArray
 end addNew
-
-private command createSite
-   put "azuraye.goaljam.org" into newDomain
-   /*
-   put fedwiki_GetDroppedArray() into postArray
-   put postArray ["wikiDomain"] into newDomain
-   */
-   --
-   put pageArray_FetchNewSite (newDomain) into pageArray
-   --
-   fedwiki_ReturnPageArray pageArray
-end createSite
 
 on spam
    put transport_FetchAtopiaCatModel() into atopiaCatModel

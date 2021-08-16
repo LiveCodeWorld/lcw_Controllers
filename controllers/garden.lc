@@ -25,9 +25,9 @@
    */
 
    command garden
-      start using stack (gAPPPATH & "stacks/lib_Fedwiki.livecode")
-      start using stack (gAPPPATH & "stacks/lib_FedwikiRoster.livecodescript")
-      start using stack (gAPPPATH & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiRoster.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
    end garden
    
 

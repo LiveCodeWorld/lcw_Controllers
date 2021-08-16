@@ -1,6 +1,6 @@
 ﻿script "scrape.lc"
 getprop dep_StackNames
-   return "lib_Citation,lib_Curly,lib_Fedwiki,lib_HTML,lib_ImageMagick,lib_Map,lib_PageArray,lib_REST,lib_Scrape,lib_Transport,model_PageArray"
+   return "lib_Audioboom,lib_Citation,lib_Curly,lib_Fedwiki,lib_HTML,lib_ImageMagick,lib_Map,lib_PageArray,lib_REST,lib_Scrape,lib_Transport,lib_XHTML,model_PageArray"
 end dep_StackNames
 
 on index
@@ -15,8 +15,7 @@ on index
    put transport_ConstructUpdatePageArray (lastUpdatedSeconds, postArray) into pageArray
    transport_StorePageArray pageArray
    put the result into tResult
-   put tResult
-   /*
+   --
    if item 1 of tResult is "error" then
       put pageArray_Construct ("Bad", tResult) into responseArray
    else
@@ -24,7 +23,6 @@ on index
    end if
    pageArray_AddMarkdown responseArray, "That is all for now. We will return more useful data here at a later date."
    fedwiki_ReturnPageArray responseArray
-   */
 end index
 
 on htmlPage

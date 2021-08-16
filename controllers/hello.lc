@@ -1,0 +1,42 @@
+<?lc
+   global gControllerHandlers, gData
+   
+   put "writeTime,index,hello" into gControllerHandlers
+
+   command hello
+      start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
+      start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Transport.livecodescript")
+   end hello
+   
+   command index
+      put "Clock Model" into modelName
+      --
+      put the time into clockData ["time"]
+      transport_SetModel modelName, clockData
+      
+      put transport_FetchModel (modelName) into modelData
+      put modelData ["time"] into sText
+      put pageArray_Construct ("Last Time", sText) into pageArray
+      --
+      fedwiki_ReturnPageArray pageArray
+   end index
+   
+   on writeTime
+      /*
+      # MAKE SURE THAT THE CONTROLLER IS ONLY ACCESSIBLE VIA COMMAND LINE
+      if $_SERVER["PATH_TRANSLATED"] <> empty then
+         put "This script can only be accessed via the command line."
+         exit to top
+      end if
+      */
+      
+      put "Clock Model" into modelName
+      put the time into timeModel ["time"]
+      transport_SetModel modelName, timeModel
+      
+      put "Hello" && timeModel ["time"] & CR
+   end writeTime
+
+?>

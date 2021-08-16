@@ -1,6 +1,6 @@
 ﻿script "atopia.lc"
 getprop dep_StackNames
-   return "lib_AtopiaTree,lib_AtopiaUpdate,lib_Date,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_Transport,model_Atopia,model_PageArray,model_Transport"
+   return "lib_AtopiaTrash,lib_AtopiaTree,lib_Audioboom,lib_Date,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_REST,model_Atopia,model_PageArray,model_Transport"
 end dep_StackNames
 
 on index
@@ -79,22 +79,20 @@ on deleteShortModelFile
 end deleteShortModelFile
 
 on writeModel
-   -- put rigVarPost (modelName) into modelData
    put $_POST_RAW into rawJSON
-   put json_ToArray (rawJSON) into postData
+   put textEncode (rawJSON) into encodedJSON
+   put json_ToArray (encodedJSON) into postData
    --
    put rigFetchConfigItem ("TransportModel") into storedSecret
    put postData ["secret"] into someSecret
    --
-   -- put rigFetchSegment (3, "Atopia Model") into modelName
    put postData ["modelName"] into modelName
    --
    if someSecret is storedSecret AND modelName is not empty then 
       put postData ["modelData"] into modelData
       --
-      transport_WriteModel modelName, modelData
+      transport_SetModel modelName, modelData
       put the result into jsonPath
-      --
       put pageArray_Construct (word 1 of the params, jsonPath) into rPageArray
    else
       put pageArray_Construct ("Error", "Not authenticated") into rPageArray
