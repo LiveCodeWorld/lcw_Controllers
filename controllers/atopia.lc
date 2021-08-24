@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "auth,deleteModel,deleteShortModelFile,writeModel,listModels,list,index,atopia" into gControllerHandlers
+   put "deleteModel,writeModel,auth,listModels,deleteShortModelFile,list,index,atopia" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -26,13 +26,10 @@
 
    command atopia
       start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaUpdate.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_Date.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiRoster.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_Transport.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_Atopia.livecodescript")
+      start using stack (gRigA["APPPATH"] & "stacks/model_Fedray.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_Transport.livecodescript")
    end atopia
@@ -120,22 +117,20 @@
    end deleteShortModelFile
    
    on writeModel
-      -- put rigVarPost (modelName) into modelData
       put $_POST_RAW into rawJSON
-      put json_ToArray (rawJSON) into postData
+      put textEncode (rawJSON) into encodedJSON
+      put json_ToArray (encodedJSON) into postData
       --
       put rigFetchConfigItem ("TransportModel") into storedSecret
       put postData ["secret"] into someSecret
       --
-      -- put rigFetchSegment (3, "Atopia Model") into modelName
       put postData ["modelName"] into modelName
       --
       if someSecret is storedSecret AND modelName is not empty then 
          put postData ["modelData"] into modelData
          --
-         transport_WriteModel modelName, modelData
+         transport_SetModel modelName, modelData
          put the result into jsonPath
-         --
          put pageArray_Construct (word 1 of the params, jsonPath) into rPageArray
       else
          put pageArray_Construct ("Error", "Not authenticated") into rPageArray
@@ -169,5 +164,20 @@
       --
       fedwiki_ReturnPageArray pageArray   
    end list
+   
+   private function roster_ConstructPageArray rosterText, pRosterTitle
+      if pRosterTitle is empty then
+         put "Roster Page" into pageArray ["title"]
+      else
+         put pRosterTitle into pageArray ["title"]
+         put pRosterTitle & CR & CR before rosterText
+      end if
+      
+      replace comma with CR in rosterText
+      --
+      pageArray_AddRoster pageArray, rosterText
+      pageArray_StripJournal pageArray
+      return pageArray
+   end roster_ConstructPageArray
 
 ?>

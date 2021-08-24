@@ -1,6 +1,6 @@
 ﻿script "atopia.lc"
 getprop dep_StackNames
-   return "lib_AtopiaTrash,lib_AtopiaTree,lib_Audioboom,lib_Date,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_REST,model_Atopia,model_PageArray,model_Transport"
+    return "lib_AtopiaTree,lib_Fedwiki,lib_PageArray,model_Atopia,model_Fedray,model_PageArray,model_Transport"
 end dep_StackNames
 
 on index
@@ -30,53 +30,6 @@ on listModels
    filter atopiaModelShortFiles without ".*"
    put atopiaModelShortFiles
 end listModels
-
-on deleteModel
-   put $_POST_RAW into rawJSON
-   put json_ToArray (rawJSON) into postData
-   --
-   put rigFetchConfigItem ("TransportModel") into storedSecret
-   put postData ["secret"] into someSecret
-   put postData ["modelName"] into modelName
-   --
-   if someSecret is storedSecret AND modelName is not empty then 
-      transport_DeleteModel modelName
-      put the result into deleteResult
-      if item 1 of deleteResult = "error" then
-         put pageArray_Construct ("Error", deleteResult) into rPageArray
-      else
-         put pageArray_Construct (word 1 of the params, deleteResult) into rPageArray
-      end if
-   else
-      put pageArray_Construct ("Error", "Not authenticated") into rPageArray
-   end if
-   --
-   fedwiki_ReturnPageArray rPageArray
-end deleteModel
-
-on deleteShortModelFile
-   put $_POST_RAW into rawJSON
-   put json_ToArray (rawJSON) into postData
-   --
-   put rigFetchConfigItem ("TransportModel") into storedSecret
-   put postData ["secret"] into someSecret
-   put postData ["shortModelFile"] into shortModelFile
-   --
-   if someSecret is storedSecret AND shortModelFile is not empty then 
-      transport_DeleteShortModelFile shortModelFile
-      put the result into deleteResult
-      --
-      if item 1 of deleteResult = "error" then
-         put pageArray_Construct ("Error", deleteResult) into rPageArray
-      else
-         put pageArray_Construct (word 1 of the params, deleteResult) into rPageArray
-      end if
-   else
-      put pageArray_Construct ("Error", "Not authenticated") into rPageArray
-   end if
-   --
-   fedwiki_ReturnPageArray rPageArray
-end deleteShortModelFile
 
 on writeModel
    put $_POST_RAW into rawJSON
@@ -126,3 +79,18 @@ on list
    --
    fedwiki_ReturnPageArray pageArray   
 end list
+
+private function roster_ConstructPageArray rosterText, pRosterTitle
+   if pRosterTitle is empty then
+      put "Roster Page" into pageArray ["title"]
+   else
+      put pRosterTitle into pageArray ["title"]
+      put pRosterTitle & CR & CR before rosterText
+   end if
+   
+   replace comma with CR in rosterText
+   --
+   pageArray_AddRoster pageArray, rosterText
+   pageArray_StripJournal pageArray
+   return pageArray
+end roster_ConstructPageArray

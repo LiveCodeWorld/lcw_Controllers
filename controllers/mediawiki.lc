@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "importSection,favicon,wikipage,form,index,section,mediawiki" into gControllerHandlers
+   put "importSection,form,favicon,wikipage,index,section,mediawiki" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==

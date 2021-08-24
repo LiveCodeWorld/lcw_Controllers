@@ -1,12 +1,11 @@
 ﻿script "update.lc"
 getprop dep_StackNames
-   return "lib_AtopiaCreation,lib_AtopiaTrash,lib_AtopiaTree,lib_Fedwiki,lib_FedwikiSitemap,lib_PageArray,lib_REST,model_Atopia,model_AtopiaCreate,model_AtopiaFiles,model_PageArray,model_Transport,model_WikiSitePage"
+   return "lib_AtopiaCreation,lib_AtopiaTrash,lib_AtopiaTree,lib_Fedwiki,lib_FedwikiSitemap,lib_PageArray,model_AtopiaFiles,model_PageArray,model_Transport"
 end dep_StackNames
 
 on index
    put atopia_ConstructCatModel() into atopiaCatModel
-   --
-   transport_StoreAtopiaCatModel atopiaCatModel
+   atopia_StoreCatModel atopiaCatModel
    --
    put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
    fedwiki_ReturnPageArray pageArray
@@ -32,7 +31,7 @@ on atopia
 end atopia
 
 on recentSites
-   put transport_FetchAtopiaCatModel() into atopiaCatModel
+   put atopia_FetchCatModel() into atopiaCatModel
    --
    atopia_UpdateModified atopiaCatModel
    --
@@ -41,8 +40,6 @@ on recentSites
 end recentSites
 
 on addNew
-   -- put transport_FetchAtopiaCatModel() into atopiaCatModel
-   -- put atopiaCatModel ["new sites"] into newDomainArray
    put atopia_ListNewCatFolders() into newAtopiaDomains
    --
    get "Below we list any new sites that have been created since the [[Last Update]] on the [[Atopia server]]:"
@@ -57,7 +54,7 @@ on addNew
 end addNew
 
 on spam
-   put transport_FetchAtopiaCatModel() into atopiaCatModel
+   put atopia_FetchCatModel() into atopiaCatModel
    --
    atopia_TrashSpam atopiaCatModel
    --

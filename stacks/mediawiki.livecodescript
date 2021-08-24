@@ -1,6 +1,6 @@
 ﻿script "mediawiki.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Curly,lib_Encoding,lib_Fedwiki,lib_FedWikiPedia,lib_Map,lib_MediaWiki,lib_PageArray,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
+   return "lib_Curly,lib_Encoding,lib_Fedwiki,lib_FedWikiPedia,lib_Map,lib_MediaWiki,lib_PageArray,lib_PageSection,lib_WikiCommons,lib_WikiPageArray,lib_WikiRestBase,lib_WikiSandbox,lib_WikiVideo,lib_Xkcd,model_PageArray"
 end dep_StackNames
 
 on index

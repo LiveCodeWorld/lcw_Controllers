@@ -11,7 +11,7 @@
    
    global gControllerHandlers, gData
    
-   put "spam,trashAndIndex,addNew,recentSites,atopia,index,update" into gControllerHandlers
+   put "addNew,spam,trashAndIndex,atopia,recentSites,index,update" into gControllerHandlers
 
    
    /* ==  INITIALISATION  ==
@@ -28,21 +28,13 @@
       start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaCreation.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTrash.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/lib_AtopiaTree.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_DigitalOcean.livecode")
       start using stack (gRigA["APPPATH"] & "stacks/lib_Fedwiki.livecode")
       start using stack (gRigA["APPPATH"] & "stacks/lib_FedwikiSitemap.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_LCW.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/lib_PageArray.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_RemoteServer.livecode")
       start using stack (gRigA["APPPATH"] & "stacks/lib_REST.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/lib_Shell.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_Atopia.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_AtopiaCreate.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_AtopiaFiles.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/model_DigitalOcean.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/model_Fedray.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/model_Fedwiki.livecodescript")
-      start using stack (gRigA["APPPATH"] & "stacks/model_Library.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_PageArray.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_Transport.livecodescript")
       start using stack (gRigA["APPPATH"] & "stacks/model_WikiSitePage.livecodescript")
@@ -59,18 +51,26 @@
       put atopia_ConstructCatModel() into atopiaCatModel
       --
       transport_StoreAtopiaCatModel atopiaCatModel
-      --
       put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
       fedwiki_ReturnPageArray pageArray
+      /*
+      atopia_TrashAndIndex atopiaCatModel
+      put the result into statusData
+      put statusData ["trashAndIndexTime"] into trashAndIndexTime
+      --
+      put "Trashing and indexing the Atoppia Server took:" && trashAndIndexTime into someMarkdown
+      put someMarkdown
+      */
    end index
    
    on trashAndIndex
       put atopia_ConstructCatModel() into atopiaCatModel
-      atopia_UpdateFromCatModel atopiaCatModel
-      put the result into resultArray
+      atopia_TrashAndIndex atopiaCatModel
+      put the result into statusData
+      put statusData ["trashAndIndexTime"] into trashAndIndexTime
       --
-      put "We last updated the federation indexes on:" && the internet date into someMarkdown
-      put pageArray_Construct ("Update Fedrays", someMarkdown) into pageArray
+      put "Trashing and indexing the Atoppia Server took:" && trashAndIndexTime into someMarkdown
+      put pageArray_Construct ("Fedray Update Report", someMarkdown) into pageArray
       fedwiki_ReturnPageArray pageArray
    end trashAndIndex
    
