@@ -27,6 +27,47 @@ on index
    end switch
 end index
 
+command scrape_SetUserAgent
+   -- HTTP_USER_AGENT Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0
+   -- HTTP_USER_AGENT Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36
+   put "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0" into sHeader
+   set the httpheaders to sHeader
+end scrape_SetUserAgent
+
+on test
+   put "https://www.listennotes.com/podcasts/revolutions/725-the-parliament-of-dAFT1JL2irh/" into droppedURL
+   scrape_SetUserAgent
+   put url droppedURL into someHTML
+   -- put shell ("curl" && droppedURL) into someHTML
+   put the number of words of someHTML into wNum
+   
+   -- put textdecode (someHTML, "UTF-8") into someHtml
+   put offset ("data-episode-uuid", someHtml) into wordNum
+   if wordNum = 0 then
+      put "Can't find:" && someHTML
+   else
+      get word wordNum of someHtml
+      put token 7 of it into episodeID
+      put "Found:" && it && episodeID &&  wNum
+   end if
+   
+   /*
+   
+   -- put listenNotes_EpisodeID (someHtml)
+   -- fedwiki_ReturnError "Testing", it
+   
+   put listenNotes_FetchEpisodeID (droppedURL) into episodeID
+   
+   -- put listenNotes_PageArrayFromScrape (sURL) into pageArray
+   put "0c60625d4dd942b2abb2ce3d26f690c0" into episodeID
+   -- put "7.25- The Parliament of Professors" into searchTerm
+   -- put listenNotes_EpisodeSearchPageArray (searchTerm) into pageArray
+   
+   put listenNotes_ConstructEpisodePageArray (episodeID) into pageArray
+   fedwiki_ReturnPageArray pageArray
+   */
+end test
+
 on rss
    put _RssPageArray() into pageArray
    fedwiki_ReturnPageArray pageArray
@@ -65,6 +106,11 @@ on findEpisodeInPodcast
    if searchTerm is empty then fedwiki_ExitAndReturnError "Search term is empty!", "Problem with search"
    put postedArray ["podcastID"] into podcastID
    if podcastID is empty then fedwiki_ExitAndReturnError "PodcastID is empty!", "Problem with search"
+   
+   -- put "Parliament of Professors" into searchTerm
+   -- put "ed7b7197dba8478bae1e8ab6ea412d81" into podcastID
+   -- put listenNotes_FetchEpisodeJSON (searchTerm, podcastID) into someJSON
+   -- put someJSON
    
    put listenNotes_FindEpisode (searchTerm, podcastID) into foundEpisodeData
    put listenNotes_FoundPageArray (foundEpisodeData) into pageArray

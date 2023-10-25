@@ -1,0 +1,48 @@
+﻿script "lcw_Controllers"
+--> MetaData
+-
+license: GPLv3
+name: lcw_Camera
+type: project
+author: authorName
+version: 0.1
+
+
+--> Deps
+-
+getprop project_Deps
+   return "lcw"
+end project_Deps
+
+
+--> Custom
+-
+command project_CustomInit
+   -- your code here
+end project_CustomInit
+
+
+--> Events
+-
+on preOpenStack 
+   if the short name of the defaultstack is not the short name of me then
+      pass preOpenStack
+   else
+      lcw_Init
+      env_RecursivelyLoadProjects
+   end if
+end preOpenStack
+
+
+--> Deps
+-
+command lcw_Init
+   -- make sure LCW is loaded so we can open from finder
+   set the itemdelimiter to slash
+   put the effective filename of the defaultstack into lcwHomePath
+   put "lcw/lcw.livecode" into item -2 to -1 of lcwHomePath
+   if there is a stack lcwHomePath then
+      dispatch "lcw_Init" to stack lcwHomePath
+   end if
+end lcw_Init
+
