@@ -26,24 +26,45 @@ getprop menu_CheckTarget [cameraView]
    return exists (cameraView)
 end menu_CheckTarget
 
+getprop dropController_Param [displayView]
+   put the drop_ControllerName of displayView into dName
+   return dName
+end dropController_Param
+
+getprop dropController_Params
+   get project_ListStackNames ("stacks", "lcw_Controllers", false)
+   sort it
+   return it
+end dropController_Params
+
 
 --> Global | Controller | Drop | Menu
 -
-on menu_Behavior displayView
-   put the behavior of displayView into bObject
-   edit the script of bObject
-end menu_Behavior
+on menu_DropController displayView, dName
+   switch dName
+      case "Ask"
+         put the drop_ControllerName of displayView into dName
+         if dName is empty then put "roster.lc" into dName
+         put lcw_Ask ("Choose a controller...", dName, "LCW Controller", displayView) into dName
+         break
+   end switch
+   --
+   set the drop_ControllerName of displayView to dName
+end menu_DropController
 
 private on _
 end _
 
-on menu_MenuEdit displayView
-   menu_Edit "Global | Controller | Drop | Menu"
-end menu_MenuEdit
-
-on submenu_Dev
-   return menu_DevTitle ("Global | Controller | Drop | Menu")
-end submenu_Dev
+on menu_EditDropController dropView
+   put the drop_Controller of dropView into bObject
+   if exists (bObject) is true then
+      edit the script of bObject
+   else
+      breakpoint
+      put the behavior of dropView into bObject
+      edit the script of bObject
+   end if
+end menu_EditDropController
 
 private on __
 end __

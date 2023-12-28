@@ -5,54 +5,16 @@ end dep_StackNames
 
 on index
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-   set the itemdelimiter to "."
-   switch
-      case item -1 of droppedURL is among the items of "m4v.mp4.webm"
-         put item -1 of droppedURL into mType
-         switch mType
-            case "m4v"
-               put "mp4" into mType
-               break
-               put  tolower (mType) into mType
-         end switch
-         
-         put "HTML5" && mType into videoType
-         set the itemdelimiter to slash
-         put item 3 of droppedURL into kWord
-         replace "www." with empty in kWord
-         put "Imported video" && "- [" & droppedURL && kWord & "]" into videoDescription
-         pageArray_AddVideo pageArray, droppedURL, videoType, videoDescription
-         fedwiki_ReturnPageArray pageArray
-         break
-      case droppedURL begins with "https://www.youtube.com/"
-         put youtube_ParseDropUrl (droppedURL) into pageJSON
-         fedwiki_ReturnJSON pageJSON
-         break
-      case droppedURL begins with "https://vimeo.com/"
-         vimeo
-         break
-      case matchText (droppedURL, "https\://www\.ted\.com/talks/(.+)", tedID)
-         -- https://www.ted.com/talks/jimmy_wales_on_the_birth_of_wikipedia
-         put ted_ConstructPageArray (tedID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
-         break
-      default
-         put pageArray_Construct ("Error", "The url was not a video url that i recognise!") into pageArray
-         fedwiki_ReturnPageArray pageArray
-   end switch
+   put index_GetPageArray (droppedURL) into pageArray
+   fedwiki_ReturnPageArray pageArray
 end index
 
 on vimeo
-   -- put 282295938 into vimeoID
    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-   if matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID) then
-      put vimeo_ConstructPageArray (vimeoID) into fedwikiPageArray
-      fedwiki_ReturnPageArray fedwikiPageArray
-   else
-      put "This is not a Vimeo video. URL =" && droppedURL into errorText
-      put pageArray_Construct ("Error", errorText) into pageArray
-      fedwiki_ReturnPageArray pageArray
-   end if
+   --
+   put vimeo_GetPageArray (droppedURL) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
 end vimeo
 
 on transport_Video
@@ -129,6 +91,53 @@ on recentBullets
    put youtube_ListAllDropUrl (droppedURL, "recentFirst", false) into pageJSON
    fedwiki_ReturnJSON pageJSON
 end recentBullets
+
+function index_GetPageArray droppedURL
+   set the itemdelimiter to "."
+   switch
+      case droppedURL begins with "https://vimeo.com/"
+         put vimeo_GetPageArray (droppedURL) into pageArray
+         break
+      case item -1 of droppedURL is among the items of "m4v.mp4.webm"
+         put item -1 of droppedURL into mType
+         switch mType
+            case "m4v"
+               put "mp4" into mType
+               break
+               put  tolower (mType) into mType
+         end switch
+         
+         put "HTML5" && mType into videoType
+         set the itemdelimiter to slash
+         put item 3 of droppedURL into kWord
+         replace "www." with empty in kWord
+         put "Imported video" && "- [" & droppedURL && kWord & "]" into videoDescription
+         pageArray_AddVideo pageArray, droppedURL, videoType, videoDescription
+         break
+      case droppedURL begins with "https://www.youtube.com/"
+         put youtube_ParseDropUrl (droppedURL) into pageJSON
+         put json_ToArray(pageJSON) into pageArray
+         break
+      case matchText (droppedURL, "https\://www\.ted\.com/talks/(.+)", tedID)
+         -- https://www.ted.com/talks/jimmy_wales_on_the_birth_of_wikipedia
+         put ted_ConstructPageArray (tedID) into fedwikiPageArray
+         break
+      default
+         put pageArray_Construct ("Error", "The url was not a video url that i recognise!") into pageArray
+   end switch
+   return pageArray
+end index_GetPageArray
+
+function vimeo_GetPageArray droppedURL
+   -- put 282295938 into vimeoID
+   if matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID) then
+      put vimeo_ConstructPageArray (vimeoID) into pageArray
+   else
+      put "This is not a Vimeo video. URL =" && droppedURL into errorText
+      put pageArray_Construct ("Error", errorText) into pageArray
+   end if
+   return pageArray
+end vimeo_GetPageArray
 
 function youtube_ParseDropUrl droppedURL
    set the itemdelimiter to "/"

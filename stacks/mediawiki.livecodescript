@@ -7,6 +7,13 @@ on index
    fedwiki_SetDroppedInfo dropJSON, droppedURL, droppedHTML, droppedText
    put the result into dropArray
    put fedwiki_IsFaviconDrop (dropJSON) into isFavicon
+   --
+   put index_GetPageArray (droppedURL) into pageArray
+   --
+   fedwiki_ReturnPageArray pageArray
+end index
+
+function index_GetPageArray droppedURL
    switch
       case isFavicon
          favicon
@@ -14,11 +21,9 @@ on index
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/File:(.+)", wikiLanguage, shortImageFile)
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)#/media/File:(.+)", wikiLanguage, wikiSlug, shortImageFile)
          put wikicommons_FetchImagePageJson (shortImageFile) into pageJSON
-         fedwiki_ReturnJSON pageJSON
          break
       case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
          put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
          break
       case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
       case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
@@ -28,22 +33,18 @@ on index
       case matchText (droppedURL, "https://(.+).bitcoin.it/wiki/(.+)", wikiLanguage, wikiSlug)
       case matchText (droppedText, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)", wikiLanguage, wikiSlug)
-         wikipage
-         break
       case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
          -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
-         wikipage
+         put dropArray_WikiPage (droppedURL) into pageArray
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.ogg)", shortAudioFile)
          put "An audio from the commons..." into someText
          put wikicommons_ConstructAudioPageArray ("Wikimedia Audio", someText, droppedURL, shortAudioFile) into pageArray
-         fedwiki_ReturnPageArray pageArray
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.ogv)", shortVideoFile)
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+.webm)", shortVideoFile)
          put "A video from the commons..." into someText
          put wikicommons_ConstructVideoPageArray ("Wikimedia Video", someText, droppedURL, shortVideoFile) into pageArray
-         fedwiki_ReturnPageArray pageArray
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
          put "Wikimedia Image" into pageTitle
@@ -51,20 +52,22 @@ on index
          put pageArray_Construct (pageTitle, someText) into pageArray   
          wikicommons_FetchAndAddTwoImages pageArray, shortImageFile
          pageArray_CleanJournal pageArray
-         fedwiki_ReturnPageArray pageArray
          break
       case droppedText is empty and droppedHtml contains "https://upload.wikimedia.org/wikipedia/commons/thumb/"  -- a thumbnail
          thumbNail droppedHtml
          break
       default
          put pageArray_Construct ("Error", "Not a mediawiki site I recognise!") into pageArray
-         fedwiki_ReturnPageArray pageArray
    end switch
-end index
+   -- 
+   return pageArray
+end index_GetPageArray
 
 on wikipage
    put fedwiki_GetDroppedUrl() into droppedURL
-   put _GetPageArray (droppedURL) into pageArray
+   --
+   put dropArray_WikiPage (droppedURL) into pageArray
+   --
    fedwiki_ReturnPageArray pageArray
 end wikipage
 
@@ -75,7 +78,7 @@ on form
    --
    switch
       case postedURL is not empty
-         put _GetPageArray (postedURL) into pageArray
+         put dropArray_WikiPage (postedURL) into pageArray
          break
       case pageTitle is not empty
          put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
@@ -141,7 +144,7 @@ command thumbNail droppedHTML
    fedwiki_ReturnJSON pageJSON
 end thumbNail
 
-private function _GetPageArray droppedURL
+function dropArray_WikiPage droppedURL
    switch
       case matchText (droppedURL, "https://meta.wikimedia.org/wiki/(.+)", wikiSlug)
          -- https://meta.wikimedia.org/wiki/Community_Wishlist_Survey_2021/Admins_and_patrollers/Discourage_External_Spam_that_Exploits_Wikipedia
@@ -172,4 +175,4 @@ private function _GetPageArray droppedURL
          put pageArray_Construct ("Not a Wikipedia page!", "Not a Wikipedia page!" && droppedURL) into pageArray
    end switch
    return pageArray
-end _GetPageArray
+end dropArray_WikiPage
