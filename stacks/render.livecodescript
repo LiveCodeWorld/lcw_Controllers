@@ -49,9 +49,9 @@ on index
          -- case "POST"
          -- a transporter
          break
-         put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+         put transport_DroppedUrl ($_POST_RAW) into someUrl
          put someUrl into someJSON
-         fedwiki_ReturnJSON someJSON
+         transport_ReturnJSON someJSON
          break
       default
    end switch

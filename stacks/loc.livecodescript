@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl() into droppedURL
+   put transport_DroppedUrl() into droppedURL
    --
    put "https://www.loc.gov/pictures/collection/.+/item/(.+)/" into someReg
    if matchText (droppedURL, someReg, itemID) is true then
@@ -30,12 +30,12 @@ on index
       put pageArray_Construct ("Library of Congress Image", imageTitle) into pageArray
       --
       pageArray_AddMarkdown pageArray, placeImagesURL
-      pageArray_AddImage pageArray, smallImageURL, placeTitle, placeImagesURL
+      pageArray_AddHtmlImage pageArray, smallImageURL, placeTitle, placeImagesURL
       --
    else
       put "We did not recognise the dropped url" && droppedURL into someError
       put pageArray_Construct ("Error", someError) into pageArray
    end if
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

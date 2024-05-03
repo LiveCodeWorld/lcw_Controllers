@@ -6,7 +6,7 @@ end dep_StackNames
 on index
    put atopia_FetchStoredDomains ("livecode.world") into refTable
    put fedwiki_ConstructRosterPageArray (refTable) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 

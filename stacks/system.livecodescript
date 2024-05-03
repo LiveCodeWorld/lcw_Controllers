@@ -4,14 +4,14 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_ConstructErrorJSON ($_POST_RAW) into someJSON
-   fedwiki_ReturnJSON someJSON
+   put transport_ConstructErrorJSON ($_POST_RAW) into someJSON
+   transport_ReturnJSON someJSON
 end index
 
 on sitemap
    put fedwiki_ConstructSitemapArray ("Roster") into sitemapArray
    put json_FromArray (sitemapArray) into sitemapJSON
-   fedwiki_ReturnJSON sitemapJSON
+   transport_ReturnJSON sitemapJSON
 end sitemap
 
 function fedwiki_ConstructSitemapArray pageTitle

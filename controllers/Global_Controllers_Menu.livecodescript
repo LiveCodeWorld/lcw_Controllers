@@ -29,10 +29,16 @@ end menu_CheckTarget
 
 --> Global | Controllers | Menu
 -
-on menu_Behavior displayView
-   put the behavior of displayView into bObject
-   edit the script of bObject
-end menu_Behavior
+on menu_NewController dView
+   -- view_Untracked
+   put lcw_Ask ("What is the name for the new controller?", "xxx.lc", "LCW Controllers", dView) into shortFile
+   --
+   transport_Create shortFile
+   put the result into sPath
+   --
+   display_Transporters dView
+   edit the script of stack sPath
+end menu_NewController
 
 private on _
 end _

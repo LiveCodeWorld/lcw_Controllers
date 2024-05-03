@@ -1,11 +1,11 @@
 ﻿script "wiki.lc"
 on index
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+    put transport_DroppedUrl ($_POST_RAW) into droppedURL
     put mediwiki_ExtractPageTitleFromUrl (droppedURL) into pageTitle
-    fedwiki_ReturnError pageTitle, "Not a Wikipedia page!"
+    transport_ReturnError pageTitle, "Not a Wikipedia page!"
     
     put fedwiki_FetchWikipediaPageJson (pageTitle) into someJSON
-    fedwiki_ReturnJSON someJSON
+    transport_ReturnJSON someJSON
  end index
 
  command startUsingLibraries

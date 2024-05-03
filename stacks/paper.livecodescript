@@ -5,19 +5,19 @@ end dep_StackNames
 
 on index
    -- https://paper.dropbox.com/doc/Writing-with-markdown--AUmjuiRGj1RLWCuvBHoOdxNFAg-Os7UBN3uhgSfPEdi0rqQf
-   put fedwiki_GetDroppedUrl() into droppedURL
+   put transport_DroppedUrl() into droppedURL
    switch
       case matchText (droppedURL, "https://paper.dropbox.com/doc/(.+)--([^-]+)-(.+)", docTitleBit, probUserID, docID)
          -- import_paper
          put paper_FetchDoc (docID) into docMarkdown
          put fedwiki_ConstructMarkdownPage (docMarkdown) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
          break
       case droppedURL ends with ".json"
          paper_from_wiki
          break
       default
-         fedwiki_ExitAndReturnError droppedURL, "Not an Dropbox Paper document!"
+         transport_ExitAndReturnError droppedURL, "Not an Dropbox Paper document!"
    end switch
 end index
 
@@ -29,7 +29,7 @@ on paper_update docID, revisionID
       put "DfTlWvGHJCz8abte3fvPb" into docID
       put 7 into revisionID
    end if
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    
    put "# Hello World/n" & droppedURL into newMarkdown
    --
@@ -37,18 +37,18 @@ on paper_update docID, revisionID
    put the result into resultJSON
    
    put revisionID && resultJSON into someText
-   fedwiki_ExitAndReturnError someText, "Here is the Doc ID"
+   transport_ExitAndReturnError someText, "Here is the Doc ID"
 end paper_update
 
 on paper_from_wiki
    rigLoadHelper "file"
    put "./assets/json/paper.json" into jsonAssetPath
    --
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    --
    fedwiki_TestJsonUrl droppedURL, pageTitle, storyArray, journalArray
    if the result is false then
-      fedwiki_ExitAndReturnError droppedURL, "Not an Fedwiki json url!"
+      transport_ExitAndReturnError droppedURL, "Not an Fedwiki json url!"
    end if
    
    put fedwiki_ConstructPageMarkdown (pageTitle, storyArray) into pageMarkdown
@@ -83,11 +83,11 @@ on paper_from_wiki
    --
    put "Update" && pageTitle into pageArray ["title"]
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
    
    /*
-   put fedwiki_ConstructErrorJSON (resultJSON) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   put transport_ConstructErrorJSON (resultJSON) into pageJSON
+   transport_ReturnJSON pageJSON
    return pageJSON
    */
 end paper_from_wiki

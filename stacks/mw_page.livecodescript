@@ -3,7 +3,7 @@ command index
     put mediwiki_ExtractPageTitleFromUrl (droppedURL) into pageTitle
    if pageTitle is empty then
       put "Error, this was not an mediawiki page url" into errorText
-      put fedwiki_ConstructErrorJSON (errorText) into someJSON
+      put transport_ConstructErrorJSON (errorText) into someJSON
    else
       put fedwiki_FetchWikipediaPageJson (pageTitle) into someJSON
    end if

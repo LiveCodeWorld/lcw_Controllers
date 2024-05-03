@@ -16,7 +16,7 @@ on archive
    pageArray_Rename pageArray, dayTitle
    --
    -- here we could store dayTitle page and return blank Today page.
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end archive
 
 private function _GetPageTitle

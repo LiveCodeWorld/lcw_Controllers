@@ -10,7 +10,7 @@ command index
    put fedwiki_FetchWikiMediaPageJson (shortImageFile) into someJSON
    if someJSON is empty then
       put "Error, this was not an mediawiki image url" into errorText
-      put fedwiki_ConstructErrorJSON (errorText) into someJSON
+      put transport_ConstructErrorJSON (errorText) into someJSON
    end if
    
    put new header "Content-Type: application/json; charset=utf-8"

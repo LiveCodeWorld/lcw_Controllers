@@ -1,6 +1,6 @@
 ﻿script "photo.lc" with behavior "behavior_RigLocalOveride"
 getprop dep_StackNames
-    return "lib_Curly,lib_Fedwiki,lib_HTML,lib_Image,lib_ImageMagick,lib_Map,lib_PageArray,model_PageArray"
+   return "lib_Curly,lib_Fedwiki,lib_HTML,lib_Image,lib_ImageMagick,lib_Map,lib_PageArray,model_PageArray"
 end dep_StackNames
 
 on index
@@ -10,31 +10,82 @@ on index
    switch 
       case imageURL begins with "https://www.google.com/search?q="
       case imageURL begins with "https://www.google.com/imgres?imgurl="
-         put pageArray_ConstructGoogleImagePage (imageURL) into pageArray
+         put wikiPage_GoogleImage (imageURL) into pageArray
          break
       case srcImageURL is not empty
-         put pageArray_ConstructImageEditPage (srcImageURL, imageAttributeArray, true) into pageArray
+         put wikiPage_ImageEditor (srcImageURL, imageAttributeArray, true) into pageArray
          break
       default
          -- put urldecode (imageURL) into imageURL
-         put pageArray_ConstructImageEditPage (imageURL, empty, false) into pageArray
+         put wikiPage_ImageEditor (imageURL, empty, false) into pageArray
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
+on edit_Image
+   put transport_GetRawJSON() into dropJSON
+   put json_ToArray (dropJSON) into paramArray
+   --
+   put paramArray ["pageSlug"] into pageSlug
+   put paramArray ["pageTitle"] into pageTitle
+   put paramArray ["wikiDomain"] into wikiDomain
+   --
+   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put pageArray_FindItemType ("html", pageArray, 0) into itemNum
+   put pageArray ["story"][itemNum] into itemArray
+   put itemArray ["text"] into imageHtml
+   
+   if imageHtml contains "<img data-imagestyle=" then
+      /*
+      <div style='padding: 12px; background:#eee; width:96%; align=centered;'>
+      <a href='https://upload.wikimedia.org/wikipedia/commons/e/ea/Vannevar_Bush_portrait.jpg' target='_blank'>
+      <img data-imagestyle='fullwiki'; style='display:block; margin:auto; width:100%;' src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Vannevar_Bush_portrait.jpg/320px-Vannevar_Bush_portrait.jpg'>
+      </a>
+      <p class=caption>
+      */      
+      get matchText (imageHtml, "<img .* src='(.+)'>", imageURL)
+      put xml_ToArray (imageHtml) into imageArray
+      put word 1 to -1 of imageArray ["div"]["p"] into imageCaption
+      put imageArray ["div"]["a"]["@attributes"]["href"] into imageLink
+      --
+      put itemArray ["id"] into sID
+      --
+      put itemArray_Construct ("image", sID, imageCaption) into imageArray
+      put imageURL into imageArray ["url"]
+      put "wide" into imageArray ["size"]
+      put imageLink into imageArray ["source"]
+      --
+      /*
+      put url imageURL into sImage
+      put md5_Hash (sImage) & "." & fExt into shortImageFile
+      put wikiFile_ConstructImageAsset (shortImageFile, wikiDomain) into imageFile
+      hardlink_Create fromFile, toFile
+      
+      put sWidth into imageArray ["width"]
+      put sHeight into imageArray ["height"]
+      */
+      
+      put pageArray_Construct ("Converted Image", "here is an image...") into pageArray
+      itemArray_Add imageArray, pageArray
+   end if
+   -- put wikiPage_ImageEditor (srcImageURL, imageAttributeArray, true) into pageArray
+   --
+   transport_ReturnPageArray pageArray
+end edit_Image
+
 on imageMetadata
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["imageURL"] into imageURL
    -- put "https://www.zsl.org/sites/default/files/styles/wysiwyg/public/image/2014-01/Butterfly%2025.5.06%20115.jpg" into imageURL
    --
    put pageArray_ConstructMapAndImage (imageURL, "Image Metadata") into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end imageMetadata
 
 on charcoal
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["imageURL"] into imageURL
    put postArray ["imageCaption"] into imageCaption
    put postArray ["imageWidth"] into imageWidth
@@ -43,11 +94,11 @@ on charcoal
    put imageMagick_GrayScale (imageURL, imageType) into someImage
    put pageArray_ConstructEmbeddedImage (someImage, imageType, "Grayscale Image", imageWidth) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end charcoal
 
 on grayscale
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["imageURL"] into imageURL
    put postArray ["imageCaption"] into imageCaption
    put postArray ["imageWidth"] into imageWidth
@@ -56,11 +107,11 @@ on grayscale
    put imageMagick_Charcoal (imageURL, imageType, 3) into someImage
    put pageArray_ConstructEmbeddedImage (someImage, imageType, "Charcoal Image", imageWidth) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end grayscale
 
 on embedImage
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["imageURL"] into imageURL
    put postArray ["imageCaption"] into imageCaption
    put postArray ["imageWidth"] into imageWidth
@@ -75,14 +126,14 @@ on embedImage
    pageArray_AddPagefold pageArray, "Metadata"
    pageArray_AddCode pageArray, identityInfo
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end embedImage
 
 function pageArray_ConstructEmbeddedImage someImage, imageType, imageCaption, imageWidth
    put "Embedded Image" into pageTitle
    --
    put pageTitle into pageArray ["title"]
-   put pageArray_ConstructJournal (pageTitle) into pageArray ["journal"] 
+   put journalArray_Construct (pageTitle) into pageArray ["journal"] 
    --
    pageArray_AddEmbeddedImage pageArray, someImage, imageCaption, imageType
    --

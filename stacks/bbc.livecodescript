@@ -4,8 +4,8 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
-   if droppedURL is empty then fedwiki_ExitAndReturnError "Dropped url is empty.", "Error"
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
+   if droppedURL is empty then transport_ExitAndReturnError "Dropped url is empty.", "Error"
    
    switch
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)", podBit)
@@ -13,7 +13,7 @@ on index
          listenNotes
          break
       case matchtext (droppedURL, "https://player.fm/(.+)/bookmarks/all", userName)
-         fedwiki_ExitAndReturnError "Bookmarks not done yet!", "Not done yet!"
+         transport_ExitAndReturnError "Bookmarks not done yet!", "Not done yet!"
          break
       case droppedURL begins with "https://player.fm/series/"
          playerfm
@@ -32,28 +32,28 @@ on index
          -- put "https://www.bbc.co.uk/programmes/b04p7yg3" into droppedURL
          put url droppedURL into someHTML 
          put bbc_FetchPodcastPageArray (someHtml, droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
          break
       default
          _SetDroppedHtml someHTML, droppedURL
          put scrape_HeaderSection (someHTML) into metaArray
          put metaArray ["title"] into htmlTitle
-         fedwiki_ExitAndReturnError "Dropped url is notr recognised.", "Error"
+         transport_ExitAndReturnError "Dropped url is notr recognised.", "Error"
    end switch
 end index
 
 on listenNotes   
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    switch
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)/(.+)", podcastSlug, episodeSlug)
          put listenNotes_PageArrayFromScrape (droppedURL) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)", podcastSlug)
-         fedwiki_ExitAndReturnError "Not implemented importing podcast description yet.", "Not done yet!"
+         transport_ExitAndReturnError "Not implemented importing podcast description yet.", "Not done yet!"
          break
       default
-         fedwiki_ExitAndReturnError "Dropped url is not a ListenNotes url I recognise. :(", "Error"
+         transport_ExitAndReturnError "Dropped url is not a ListenNotes url I recognise. :(", "Error"
    end switch
 end listenNotes
 
@@ -70,17 +70,17 @@ on radioLab
 end radioLab
 
 on playerfm
-   put fedwiki_GetDroppedUrl () into droppedURL
+   put transport_DroppedUrl () into droppedURL
    put playerfm_FetchArray (droppedURL) into playerfmArray
    put playerfm_ConstructPageArray (playerfmArray) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end playerfm
 
 private command _SetDroppedHtml @someHTML, @droppedURL
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL 
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL 
    put html_FetchTidy (droppedURL) into someHTML
    if someHTML is empty then
-      fedwiki_ExitAndReturnError "Dropped html is empty.", "Error"
+      transport_ExitAndReturnError "Dropped html is empty.", "Error"
    end if
    return someHTML
 end _SetDroppedHtml

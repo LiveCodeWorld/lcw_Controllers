@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURLUrl
+   put transport_DroppedUrl ($_POST_RAW) into droppedURLUrl
    put fedwiki_FetchPageArray (droppedURLUrl) into droppedPageArray
    --
    put fedwiki_PageArrayToMarkdown (droppedPageArray) into someMarkDown
@@ -14,7 +14,7 @@ on index
    put fedwiki_ConstructNewPageArray (pageTitle, firstParagraph) into pageArray
    fedwiki_AddMarkdownToPageArray pageArray, someMarkdown
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 function fedwiki_PageArrayToMarkdown pageArray

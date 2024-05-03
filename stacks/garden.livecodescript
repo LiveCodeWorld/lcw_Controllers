@@ -5,5 +5,5 @@ end dep_StackNames
 
 on index
    put roster_FetchLivePageArray ("democracy.garden") into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

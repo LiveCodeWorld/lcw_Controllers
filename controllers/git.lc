@@ -1,0 +1,47 @@
+<?lc
+   /* =  DESCRIPTION  =
+   --
+   The git.lc controller can be found at: echo.lc
+   Here is some test help
+
+   Below we declare the global variables gControllerHandlers AND gData
+   And put the public method names that we wish to expose into gControllerHandlers
+   --
+   */
+   
+   global gControllerHandlers, gData
+   
+   put "git" into gControllerHandlers
+
+   
+   /* ==  INITIALISATION  ==
+   --
+   Put all the handlers and variables that you wish to merge into your views
+   into the global array "gData".
+
+   Write any initialisation statements (loading any neeeded libraries for instance)
+   into the initialisation handler "git.lc" below.
+   --
+   */
+
+   command git
+
+   end git
+   
+
+   /* ==  CODE  ==
+   --
+   Here we put the public handlers the controller uses and exposes as urls.
+   --
+   */
+   
+   getprop dep_StackNames
+   return "lib_Fedwiki,lib_PageArray,model_PageArray"
+end dep_StackNames
+
+on index
+   put pageArray_Construct ("Echo", "Some text") into pageArray
+   fedwiki_ReturnPageArray pageArray
+end index
+
+?>

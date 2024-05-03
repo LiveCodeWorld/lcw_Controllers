@@ -1,8 +1,8 @@
 ﻿script "ccc_wiki.lc"
 command index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    -- put mediwiki_ExtractPageTitleFromUrl(droppedURL) into pageTitle
-   -- fedwiki_ReturnError pageTitle, "Not a Wikipedia page!"
+   -- transport_ReturnError pageTitle, "Not a Wikipedia page!"
    -- put fedwiki_FetchWikipediaPageJson (pageTitle) into someJSON
    
    -- put "http://p2pfoundation.net/Defining_P2P_as_the_relational_dynamic_of_distributed_networks" into droppedURL
@@ -12,7 +12,7 @@ command index
    put mediawiki_ScrapeContent (droppedURL) into pageArray
    put json_FromArray (pageArray) into someJSON
    
-   fedwiki_ReturnJSON someJSON
+   transport_ReturnJSON someJSON
 end index
    
 function mediawiki_ScrapeContent droppedURL

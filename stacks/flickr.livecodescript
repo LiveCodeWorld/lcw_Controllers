@@ -8,7 +8,7 @@ on index
    The model is creating dependencies for model_Library and lib_LCW which are not needed on the server?
    pinterest is mixed in here an should be seperated out
    */
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    
    set the itemdelimiter to slash
    get item 1 to 4 of droppedURL
@@ -29,16 +29,16 @@ on index
             _AddImageToPageArray pageArray, droppedURL
             put json_FromArray (pageArray) into pageJSON
          else
-            put fedwiki_ConstructErrorJSON ("URL not recognised") into pageJSON
+            put transport_ConstructErrorJSON ("URL not recognised") into pageJSON
          end if
    end switch
    
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end index
 
 on flickr droppedURL
    if droppedURL is empty then
-      put fedwiki_GetDroppedUrl() into droppedURL
+      put transport_DroppedUrl() into droppedURL
    end if
    
    if matchText (droppedURL, "https://www.flickr.com/photos/(.+)/(.+)/in/.+", userID, photoID) then
@@ -46,9 +46,9 @@ on flickr droppedURL
       put the result into photoArray
       put photoArray ["location"] into locationArray
       put flickr_ConstructPhotoMapPageArray (photoTitle, photoDescription, mediumURL, droppedURL, locationArray, photoTags) into pageJSON
-      fedwiki_ReturnJSON pageJSON
+      transport_ReturnJSON pageJSON
    else
-      fedwiki_ExitAndReturnError "Dropped url is nor recognised.", "Error"
+      transport_ExitAndReturnError "Dropped url is nor recognised.", "Error"
    end if
 end flickr
 
@@ -78,7 +78,7 @@ end html_ExtractTLD
 
 on flickr droppedURL
    if droppedURL is empty then
-      put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+      put transport_DroppedUrl ($_POST_RAW) into droppedURL
    end if
    
    if matchText (droppedURL, "https://www.flickr.com/photos/(.+)/(.+)/in/.+", userID, photoID) then
@@ -86,8 +86,8 @@ on flickr droppedURL
       put the result into photoArray
       put photoArray ["location"] into locationArray
       put flickr_ConstructPhotoMapPageArray (photoTitle, photoDescription, mediumURL, droppedURL, locationArray, photoTags) into pageJSON
-      fedwiki_ReturnJSON pageJSON
+      transport_ReturnJSON pageJSON
    else
-      fedwiki_ExitAndReturnError "Dropped url is nor recognised.", "Error"
+      transport_ExitAndReturnError "Dropped url is nor recognised.", "Error"
    end if
 end flickr

@@ -13,40 +13,40 @@ on index
  end thumbNail
  
  on fedwikiLink
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+    put transport_DroppedUrl ($_POST_RAW) into droppedURL
     fedwiki_ParseFedwikiLink droppedURL, $_POST_RAW
  end fedwikiLink
  
  on editLink
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+    put transport_DroppedUrl ($_POST_RAW) into droppedURL
     if matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, sectionTitle, sectionNum) is true then
        set the itemdelimiter to "&"
        put item 1 of sectionNum into sectionNum
        fedwiki_ParseWikipediaEditLink sectionTitle, sectionNum, droppedURL, someLang
     else
-       put fedwiki_ConstructErrorJSON ("Not a Wikipedia edit link!") into pageJSON
-       fedwiki_ReturnJSON pageJSON
+       put transport_ConstructErrorJSON ("Not a Wikipedia edit link!") into pageJSON
+       transport_ReturnJSON pageJSON
     end if
  end editLink
     
  on summaryPage
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into wikipediaUrl
+    put transport_DroppedUrl ($_POST_RAW) into wikipediaUrl
     put mediwiki_ExtractPageSlugFromUrl (wikipediaUrl) into pageSlug
     put fedwiki_FetchWikipediaSummaryPageJson (pageSlug) into pageJSON
-    fedwiki_ReturnJSON pageJSON
+    transport_ReturnJSON pageJSON
  end summaryPage
  
  on importPage
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into wikipediaUrl
+    put transport_DroppedUrl ($_POST_RAW) into wikipediaUrl
     put fedwiki_FetchCoolWikipediaPageJson (wikipediaUrl) into someJSON
-    fedwiki_ReturnJSON someJSON
+    transport_ReturnJSON someJSON
  end importPage
     
  on importImage
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+    put transport_DroppedUrl ($_POST_RAW) into droppedURL
     put mediwiki_ExtractImageFileFromUrl (droppedURL) into shortImageFile
     put fedwiki_FetchWikipediaImagePageJson (shortImageFile) into someJSON
-    fedwiki_ReturnJSON someJSON
+    transport_ReturnJSON someJSON
  end importImage
     
  on importImages
@@ -58,7 +58,7 @@ on index
     wikicommons_AddAllImages fedwikiPageArray, pageTitle
     
     put json_FromArray (fedwikiPageArray) into pageJSON
-    fedwiki_ReturnJSON pageJSON
+    transport_ReturnJSON pageJSON
  end importImages
     
  on listImages
@@ -72,7 +72,7 @@ on index
     fedwiki_PageArrayAddToEnd itemArray, pageArray
     put json_FromArray (pageArray) into pageJSON
     
-    fedwiki_ReturnJSON pageJSON
+    transport_ReturnJSON pageJSON
  end listImages
 
  command startUsingLibraries

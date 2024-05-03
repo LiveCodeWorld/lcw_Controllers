@@ -13,7 +13,7 @@ command index
    put modelData ["time"] into sText
    put pageArray_Construct ("Last Time", sText) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on writeTime

@@ -40,8 +40,21 @@ on index
    put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
    --
    put pageArray_Construct ("Echo", someMarkdown) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
+
+on scaffold
+   transport_SetFormSlugDomain wikiDomain, pageSlug
+   put transport_GetFormValue ("snippetValue") into snippetResult -- "complete sentance
+   --
+   put snippet_CurlyResult (pageSlug, "snippet", snippetResult) into curlyResult
+   get sSnippet & CR&CR & curlyResult & CR&CR & snippetResult
+   --
+   put snippet_CurlyResult (pageSlug, "snippet", snippetResult) into curlyResult
+   
+   put pageArray_Construct ("Echo", it) into pageArray
+   transport_ReturnPageArray pageArray
+end scaffold
 
 function cgi_TextPath shortFile
    put tServerArray ["PATH_TRANSLATED"] into pathTranslated
@@ -56,9 +69,9 @@ end cgi_TextPath
 function _ConstructTestText
    local someText
    
-   put "# Dropped URL fedwiki_GetDroppedUrl()" & CR after someText
+   put "# Dropped URL transport_DroppedUrl()" & CR after someText
    --
-   put fedwiki_GetDroppedUrl() into droppedURL
+   put transport_DroppedUrl() into droppedURL
    put droppedURL & CR after someText
    -- 
    put CR after someText
@@ -69,7 +82,7 @@ function _ConstructTestText
       put "__Browser:__" && tBrowser & CR after someText
    end if
    --
-   put fedwiki_IsFaviconDrop() into isFavicon
+   put transport_IsFaviconDrop() into isFavicon
    put "__Dropped favicon:__" && isFavicon & CR & CR after someText
    -- 
    put CR after someText

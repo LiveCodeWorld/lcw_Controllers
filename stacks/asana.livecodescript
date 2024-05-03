@@ -4,19 +4,19 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    
    -- https://app.asana.com/0/844764154321997/914611904511854
    if matchText (droppedURL, "https://app.asana.com/0/(.+)/(.+)", projectID, taskID) is false then
-      put fedwiki_IsFaviconDrop() into isFavicon
+      put transport_IsFaviconDrop() into isFavicon
       if isFavicon is true then
          asana_CreateTaskFromWiki droppedURL
          put the result into fedwikiPageArray
          --
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          exit to top
       else
-         fedwiki_ExitAndReturnError droppedURL, "Not an Asana task"
+         transport_ExitAndReturnError droppedURL, "Not an Asana task"
       end if
    end if
    
@@ -24,14 +24,14 @@ on index
       case taskID = "board"
       case taskID = "list"
          put asana_FetchProjectPageArray (projectID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          break
       case taskID is a number
          put asana_FetchTaskPageArray (taskID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          break
       default
-         fedwiki_ExitAndReturnError droppedURL, "Not an Asana project task"
+         transport_ExitAndReturnError droppedURL, "Not an Asana project task"
    end switch
 end index
 
@@ -71,11 +71,11 @@ on user
    pageArray_StripJournal pageArray
    -- pageArray_AddFork pageArray, "sites.fedwiki.org"
    --
-   fedwiki_ReturnPageArray pageArray   
+   transport_ReturnPageArray pageArray   
 end user
 
 command _SetSomeStuff @wikiDomain, @pageSlug, @itemID, @userID
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    --
    put postArray ["wikiDomain"] into wikiDomain
    put postArray ["pageSlug"] into pageSlug

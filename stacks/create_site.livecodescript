@@ -1,6 +1,6 @@
 ﻿script "create_site.lc"
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    put fedwiki_FetchLastLineUpArray (droppedURL) into pageArray
    -- checkSignature pageArray
    --
@@ -9,7 +9,7 @@ on index
    liveworld_SaveHTML someHTML
    --
    put json_FromArray (pageArray) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end index
    
 command checkSignature pageArray
@@ -25,9 +25,9 @@ command checkSignature pageArray
 end checkSignature
    
 command returnNoSignature
-   fedwiki_ExitAndReturnError "This [[transporter]] authors content on the web site and [[requires a signature]].", "No Signature"
+   transport_ExitAndReturnError "This [[transporter]] authors content on the web site and [[requires a signature]].", "No Signature"
 end returnNoSignature
    
 command returnWrongSignature
-   fedwiki_ExitAndReturnError "The content for this [[transporter]] was not signed properly.", "Wrong Signature"
+   transport_ExitAndReturnError "The content for this [[transporter]] was not signed properly.", "Wrong Signature"
 end returnWrongSignature

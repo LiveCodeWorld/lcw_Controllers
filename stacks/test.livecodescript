@@ -6,6 +6,6 @@ end dep_StackNames
 on index
    put fedray_FetchDomains ("voz.money") into rosterDomains
    put pageArray_Construct ("Money", rosterDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 

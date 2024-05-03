@@ -4,12 +4,12 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedArray() into dArray
+   put transport_GetDroppedArray() into dArray
    put dArray ["authorName"] into authorName
    put dArray ["sincePeriod"] into sincePeriod
    put dArray ["authorTemplate"] into authorTemplate
    --
    put author_FetchUpdatedPageArray (authorName, sincePeriod, authorTemplate) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

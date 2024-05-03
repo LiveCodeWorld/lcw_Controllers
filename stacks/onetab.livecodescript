@@ -28,12 +28,12 @@ on htmlParagraphs
 end htmlParagraphs
 
 command _ReturnPageArray pType
-   put fedwiki_GetDroppedUrl() into someUrl
+   put transport_DroppedUrl() into someUrl
    if someUrl begins with "https://www.one-tab.com" then
       put oneTab_FetchPageArray (someUrl, pType) into pageArray
    else
       put "Not a [[OneTab]] web page. Visit OneTab to start collaborative bookmarking - [https://www.one-tab.com/ one-tab.com]" into someInfo
       put pageArray_Construct ("Error", someInfo) into pageArray
    end if
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end _ReturnPageArray

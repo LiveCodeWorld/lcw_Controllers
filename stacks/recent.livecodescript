@@ -7,7 +7,7 @@ on index
    put federation_FetchRecentAtopia() into atopiaDomains  
    put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
    put roster_ConstructPageArray (rosterText) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on author
@@ -18,6 +18,6 @@ on author
    put author_ListRecentSites (authorName) into thisWeeksAuthorDomains
    put author_ConstructRecentPageArray (authorName, thisWeeksAuthorDomains) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end author
 

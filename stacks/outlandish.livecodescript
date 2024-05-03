@@ -4,8 +4,9 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+   transport_SetInfo wikiDomain, pageSlug, pageTitle
+   --
    put atopia_FetchRoster ("outlandish.academy") into wikiDomains
    put roster_ConstructPageArray (wikiDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

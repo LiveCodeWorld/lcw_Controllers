@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    switch
       case droppedURL is empty
          put "Error, expecting an audioboo clip url and it is empty" into errorText
@@ -25,5 +25,5 @@ on index
          end if
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

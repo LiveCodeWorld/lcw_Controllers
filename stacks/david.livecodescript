@@ -6,5 +6,5 @@ end dep_StackNames
 on index
    put federation_FetchAuthorDomains ("David Bovill") into domainNames
    put roster_ConstructPageArray (domainNames) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    switch
       case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
          put vimeo_ConstructPageArray (vimeoID) into pageArray
@@ -14,11 +14,11 @@ on index
          put pageArray_Construct ("Error", errorText) into pageArray
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on high
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    switch
       case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
          put vimeo_ConstructPageArray (vimeoID, 6) into pageArray
@@ -28,11 +28,11 @@ on high
          put pageArray_Construct ("Error", errorText) into pageArray
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end high
 
 on thumbs
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    --
    switch
       case matchText (droppedURL, "https\://vimeo\.com/(.+)", vimeoID)
@@ -42,7 +42,7 @@ on thumbs
          if thumbNailUrls is not empty then
             pageArray_AddMarkDown pageArray, "# Thumbnails"
             repeat for each line thumbNailUrl in thumbNailUrls
-               pageArray_AddImage pageArray, thumbNailUrl
+               pageArray_AddHtmlImage pageArray, thumbNailUrl
             end repeat
          end if
          break
@@ -51,7 +51,7 @@ on thumbs
          put pageArray_Construct ("Error", errorText) into pageArray
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end thumbs
 
 on test

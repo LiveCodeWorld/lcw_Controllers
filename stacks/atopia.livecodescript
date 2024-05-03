@@ -7,7 +7,7 @@ on index
    put atopia_ListSinceDomains ("1 week") into atopiaDomains  
    put "Recent Atopia Sites" & CR & CR & atopiaDomains into rosterText
    put roster_ConstructPageArray (rosterText) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on auth
@@ -51,11 +51,11 @@ on writeModel
       put pageArray_Construct ("Error", "Not authenticated") into rPageArray
    end if
    --
-   fedwiki_ReturnPageArray rPageArray
+   transport_ReturnPageArray rPageArray
 end writeModel
 
 on list
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["outputType"] into outputType
    --
    put atopia_ListRecentDomains () into wikiDomains
@@ -77,7 +77,7 @@ on list
    pageArray_StripJournal pageArray
    pageArray_AddFork pageArray, "sites.fedwiki.org"
    --
-   fedwiki_ReturnPageArray pageArray   
+   transport_ReturnPageArray pageArray   
 end list
 
 private function roster_ConstructPageArray rosterText, pRosterTitle

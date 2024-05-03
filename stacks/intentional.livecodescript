@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl() into droppedURL
+   put transport_DroppedUrl() into droppedURL
    put urldecode (droppedURL) into droppedURL
    _SetCountryAndProvince droppedURL, someCountry, someState, someCity
    --
@@ -25,7 +25,7 @@ on index
          put pageArray_Construct ("Error", "Not a www.ic.org listing!") into pageArray
    end switch
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on importCommunity
@@ -35,25 +35,25 @@ on importCommunity
    put ic_FetchCommunityData (icSlug) into communityData
    put ic_PageFromCommunityData (communityData) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end importCommunity
 
 on importCountry
    put transport_GetFormValue ("country") into someCountry
    --
    put ic_PageFromCountry (someCountry) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end importCountry
 
 on createContact
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["contactName"] into contactName
    put postArray ["contactPhone"] into contactPhone
    --
    put contactName into pageTitle
    put pageArray_Construct (pageTitle, contactPhone) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end createContact
 
 private command _SetCountryAndProvince droppedURL, @someCountry, @someState, @someCity

@@ -7,5 +7,5 @@ on index
    put federation_FetchRecentAtopia() into atopiaDomains  
    -- put atopia_FetchRoster ("c0de.academy") into atopiaDomains
    put roster_ConstructPageArray (atopiaDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

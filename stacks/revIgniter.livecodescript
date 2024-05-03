@@ -1,6 +1,6 @@
 ﻿script "revIgniter.lc"
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    put url droppedURL into someHTML
    
    rig_ScrapeHeadings someHtml, pageTitle, handlerNames, longPaths
@@ -8,7 +8,7 @@ on index
    
    put rig_ConstructFedwikiPageArray (headerPageArray) into fedwikiPageArray
    
-   fedwiki_ReturnPageArray fedwikiPageArray
+   transport_ReturnPageArray fedwikiPageArray
 end index
    
 on transportAgain
@@ -19,15 +19,15 @@ on transportAgain
    
    put $_POST_RAW into someJSON
    -- put json_Lint (someJSON) into someJSON
-   put fedwiki_ConstructErrorJSON (someJSON, "JSON") into errorJSON
-   fedwiki_ReturnJSON errorJSON
+   put transport_ConstructErrorJSON (someJSON, "JSON") into errorJSON
+   transport_ReturnJSON errorJSON
    return false
    
    put json_ToArray (someJSON) into createArray
    fedwiki_DeconstructCreateArray createArray, parentTitle, sectionTitle, transportURL, sourceURL, pageTitle, linkDictionary
    if linkDictionary is not an array then
-   put fedwiki_ConstructErrorJSON ("This is not create JSON", "Error") into errorJSON
-   fedwiki_ReturnJSON errorJSON
+   put transport_ConstructErrorJSON ("This is not create JSON", "Error") into errorJSON
+   transport_ReturnJSON errorJSON
    return false
 end if
 end transportAgain

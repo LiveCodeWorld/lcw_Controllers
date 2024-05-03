@@ -4,17 +4,17 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    put index_GetPageArray (droppedURL) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on vimeo
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    --
    put vimeo_GetPageArray (droppedURL) into pageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end vimeo
 
 on transport_Video
@@ -27,69 +27,69 @@ on transport_Video
          put "This is not a youtube video." into errorText
          put CR & CR & $_POST_RAW after errorText
          put pageArray_Construct ("Error: linkURL is empty", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
          break
       case matchText (linkURL, "https\://www\.youtube\.com/watch\?v\=(.+)", videoID)
          -- "https://www.youtube.com/watch?v="
          put youtube_FetchVideoPageArray (videoID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          break
       case matchText (linkURL, "https\://www\.ted\.com/talks/(.+)", tedID)
          -- https://www.ted.com/talks/jimmy_wales_on_the_birth_of_wikipedia
          put ted_ConstructPageArray (tedID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          break
       case matchText (linkURL, "https\://vimeo\.com/(.+)", vimeoID)
          put vimeo_ConstructPageArray (vimeoID) into fedwikiPageArray
-         fedwiki_ReturnPageArray fedwikiPageArray
+         transport_ReturnPageArray fedwikiPageArray
          break
       default
          put "This is not a youtube video. LinkURL =" && linkURL into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
    end switch
 end transport_Video
 
 on fetchThumb
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ParseThumbUrl (droppedURL) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end fetchThumb
 
 on fetchAll
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ParseAllDropUrl (droppedURL) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end fetchAll
 
 on recentMarkdown
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst", true, true) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end recentMarkdown
 
 on oldestFirst
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "oldestFirst") into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end oldestFirst
 
 on recentFirst
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst") into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end recentFirst
 
 on oldestBullets
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "oldestFirst", false) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end oldestBullets
 
 on recentBullets
    _DeconstructDroppedURL $_POST_RAW, droppedURL, droppedHtml
    put youtube_ListAllDropUrl (droppedURL, "recentFirst", false) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end recentBullets
 
 function index_GetPageArray droppedURL
@@ -148,7 +148,7 @@ function youtube_ParseDropUrl droppedURL
    if youtubeBit is not "www.youtube.com" then
       put "Not a link that I can parse:" && droppedURL into errorText
       put pageArray_Construct ("Error", errorText) into pageArray
-      fedwiki_ReturnPageArray pageArray
+      transport_ReturnPageArray pageArray
    end if
    
    put 10 into pMaxResults
@@ -186,7 +186,7 @@ function youtube_ParseDropUrl droppedURL
       default
          put "Not a link that I can parse." & CR & CR & dropJSON into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
    end switch
 end youtube_ParseDropUrl
 
@@ -204,7 +204,7 @@ function youtube_ListAllDropUrl droppedURL, pDirection, pNumbered
       case "user"
          put "Not done users yet for indexes" & CR & CR & dropJSON into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
       case "channel"
          put extraBit into channelID
          put youtube_FetchChannelIndexPageJson (channelID) into pageJSON
@@ -220,7 +220,7 @@ function youtube_ListAllDropUrl droppedURL, pDirection, pNumbered
       default
          put "Not a link that I can parse." & CR & CR & dropJSON into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
    end switch
 end youtube_ListAllDropUrl
 
@@ -262,7 +262,7 @@ function youtube_ParseAllDropUrl droppedURL
       default
          put "Not a link that I can parse." & CR & CR & dropJSON into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
    end switch
 end youtube_ParseAllDropUrl
 
@@ -299,7 +299,7 @@ function youtube_ParseThumbUrl droppedURL
       default
          put "Not a link that I can parse." & CR & CR & dropJSON into errorText
          put pageArray_Construct ("Error", errorText) into pageArray
-         fedwiki_ReturnPageArray pageArray
+         transport_ReturnPageArray pageArray
    end switch
 end youtube_ParseThumbUrl
 

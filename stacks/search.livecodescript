@@ -7,16 +7,16 @@ on index
    put cse_ConstructPostArray ("Federation", "wiki") into postArray
    cse_DeconstructPostArray postArray, cseName, googleQuery, pWord, cseOffset
    put cse_SearchAndConstructPageArray (googleQuery, pWord, cseOffset, cseName) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on cse
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    --
    cse_DeconstructPostArray postArray, cseName, googleQuery, pWord, cseOffset
    put cse_SearchAndConstructPageArray (googleQuery, pWord, cseOffset, cseName) into pageArray
    --
    put json_FromArray (pageArray) into someJSON
    replace "\u0022" with quote in someJSON
-   fedwiki_ReturnJSON someJSON
+   transport_ReturnJSON someJSON
 end cse

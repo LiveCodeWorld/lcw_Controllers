@@ -7,5 +7,5 @@ on index
    put federation_FetchAuthorDomains ("Ward Cunningham") into domainNames
    put roster_ConstructPageArray (domainNames) into pageArray
    put pageArray_Construct (pageTitle, pSomeText, pSourceArray)
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

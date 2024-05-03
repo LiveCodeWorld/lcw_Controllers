@@ -5,5 +5,5 @@ end dep_StackNames
 
 on index
    put fedwiki_FetchFilteredFederationActivity ("server.fedwiki.org", "atopia-domain-index", "741a0fcdd3ff76b2") into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index

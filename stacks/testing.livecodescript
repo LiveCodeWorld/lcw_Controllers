@@ -9,14 +9,14 @@ on index
    put json_ToArray (it) into fedray
    put keys (fedray) into wikiDomains
    put pageArray_Construct ("Money", wikiDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on good
    put fedray_FetchDomains ("voz.money") into fedrayDomains
    --
    put pageArray_Construct ("Money", fedrayDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end good
 
 on bad
@@ -26,5 +26,5 @@ on bad
    url_SortDomainIndex fedrayDomains
    --
    put pageArray_Construct ("Money", fedrayDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end bad

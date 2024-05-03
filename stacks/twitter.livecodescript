@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    put twitter_FetchPageJson (droppedURL) into pageJSON
-   fedwiki_ReturnJSON pageJSON
+   transport_ReturnJSON pageJSON
 end index

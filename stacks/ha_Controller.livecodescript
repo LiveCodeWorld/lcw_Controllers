@@ -1,13 +1,13 @@
 ﻿script "ha_Controller.lc"
 on index
-    put fedwiki_GetDroppedUrl ($_POST_RAW) into someUrl
+    put transport_DroppedUrl ($_POST_RAW) into someUrl
     
     put rig_StackFolder() into someThing
     -- put rig_FetchStackFiles() into someThing
     put CR & the version after someThing
     
-    put fedwiki_ConstructErrorJSON (someThing) into someJSON
-    fedwiki_ReturnJSON someJSON
+    put transport_ConstructErrorJSON (someThing) into someJSON
+    transport_ReturnJSON someJSON
  end index
  
  function rig_StackFolder rigApplicationFolder

@@ -8,7 +8,7 @@ on index
    atopia_StoreCatModel atopiaCatModel
    --
    put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on trashAndIndex
@@ -19,7 +19,7 @@ on trashAndIndex
    --
    put "Trashing and indexing the Atoppia Server took:" && trashAndIndexTime into someMarkdown
    put pageArray_Construct ("Fedray Update Report", someMarkdown) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end trashAndIndex
 
 on atopia
@@ -27,7 +27,7 @@ on atopia
    put the result into atopiaCatModel
    --
    put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end atopia
 
 on recentSites
@@ -36,7 +36,7 @@ on recentSites
    atopia_UpdateModified atopiaCatModel
    --
    put atopia_ConstructLastAtopiaUpdatePageArray (atopiaCatModel) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end recentSites
 
 on addNew
@@ -50,7 +50,7 @@ on addNew
       pageArray_AddHtml pageArray, btnHTML
    end repeat
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end addNew
 
 on spam
@@ -59,5 +59,5 @@ on spam
    atopia_TrashSpam atopiaCatModel
    --
    put the result into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end spam

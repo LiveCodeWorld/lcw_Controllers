@@ -4,7 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 on index
-   put fedwiki_GetDroppedUrl() into googleURL
+   put transport_DroppedUrl() into googleURL
    put google_ConstructFedwikiImagePageArray (googleURL) into fedwikiPageArray
-   fedwiki_ReturnPageArray fedwikiPageArray
+   transport_ReturnPageArray fedwikiPageArray
 end index

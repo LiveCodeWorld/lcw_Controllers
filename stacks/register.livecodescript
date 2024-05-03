@@ -11,7 +11,7 @@ on index
    put the result into jsonPath
    put pageArray_Construct ("Activity", jsonPath) into activityPageArray
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on clearRoster
@@ -22,7 +22,7 @@ on clearRoster
    put the result into jsonPath
    put pageArray_Construct ("Activity", jsonPath) into activityPageArray
    --
-   fedwiki_ReturnPageArray activityPageArray
+   transport_ReturnPageArray activityPageArray
 end clearRoster
 
 private command _SetParams @wikiToAdd, @rosterName, @templateDomain
@@ -33,7 +33,7 @@ private command _SetParams @wikiToAdd, @rosterName, @templateDomain
    return true
    */
    
-   put fedwiki_GetDroppedArray() into postArray
+   put transport_GetDroppedArray() into postArray
    put postArray ["rosterName"] into rosterName
    put postArray ["templateDomain"] into templateDomain
    --

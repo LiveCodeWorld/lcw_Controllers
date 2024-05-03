@@ -5,21 +5,5 @@ end dep_StackNames
 
 on index
    put pageArray_Construct ("writeModel", "Atopia Model") into rPageArray
-   fedwiki_ReturnPageArray rPageArray
-   /*
-   put transport_GetModelFolder() into modelFolder
-   put file_ListShort (modelFolder) into shortModelFiles
-   put shortModelFiles
-   */
+   transport_ReturnPageArray rPageArray
 end index
-
-function file_ListShort someFolder, pShowInvisible
-   if there is not a folder someFolder then return empty
-   put files (someFolder) into shortFiles
-   if pShowInvisible is not true then filter shortFiles without ".*"
-   return shortFiles
-end file_ListShort
-
-
-
-

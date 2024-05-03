@@ -1,6 +1,6 @@
 ﻿script "slideshow.lc"
 command index
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    put fedwiki_ConstructUrlArray (droppedURL) into urlArray
    
    put fedwiki_ConstructSimplePageArray ("Test Page") into newPageArray
@@ -15,5 +15,5 @@ command index
 end repeat
    fedwiki_CleanJournalArray newPageArray
    put json_FromArray (newPageArray) into someJSON
-   fedwiki_ReturnJSON someJSON
+   transport_ReturnJSON someJSON
 end index

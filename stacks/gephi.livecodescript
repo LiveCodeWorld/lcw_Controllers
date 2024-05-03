@@ -5,8 +5,7 @@ end dep_StackNames
 
 on index
    local pNotTheseSlugs
-   fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
-   
+   --
    put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
    put pageArray_GetPageLinkSlugs (pageArray) into pSlugs
    
@@ -16,12 +15,12 @@ on index
    put fedwiki_ConstructNewPageArray ("Gephi CSV", someText) into pageArray
    pageArray_AddCode pageArray, gephiCSV
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
 
 on tables
    local pNotTheseSlugs
-   fedwiki_DeconstructDroppedURL pageSlug, wikiDomain
+   transport_SetInfo wikiDomain, pageSlug, pageTitle
    
    put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
    put pageArray_GetPageLinkSlugs (pageArray) into pSlugs
@@ -36,17 +35,17 @@ on tables
    pageArray_AddCode pageArray, csvLines
    pageArray_AddCode pageArray, nodeTableLines
    --
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end tables
 
 on lineup
    local pNotTheseSlugs
-   put fedwiki_GetDroppedUrl ($_POST_RAW) into droppedURL
+   put transport_DroppedUrl ($_POST_RAW) into droppedURL
    
    put fedwiki_ConstructUrlArray (droppedURL) into urlArray
    
    
    put fedwiki_ConstructNewPageArray ("Gephi CSV", someJSON) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end lineup
 

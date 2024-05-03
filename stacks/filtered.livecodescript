@@ -7,5 +7,5 @@ on index
    put federation_RecentWithoutAtopiaDomains() into withoutAtopiaDomains
    put "Filtered Federation Activity" & CR & CR before withoutAtopiaDomains
    put roster_ConstructPageArray (withoutAtopiaDomains) into pageArray
-   fedwiki_ReturnPageArray pageArray
+   transport_ReturnPageArray pageArray
 end index
