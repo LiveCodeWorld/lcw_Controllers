@@ -3,6 +3,12 @@ getprop dep_StackNames
    return "lib_AtopiaTree,lib_Fedwiki,lib_FedwikiRoster,lib_PageArray,lib_PageSection,model_PageArray"
 end dep_StackNames
 
+private function _PageArray wikiDomain, pageSlug
+   -- put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put pageArray_Get (wikiDomain, pageSlug) into pageArray
+   return pageArray
+end _PageArray
+
 
 --> Only work with LiveServer for now
 -
@@ -76,7 +82,7 @@ end clean_Title
 on form_EditMedia
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    get pageArray_Construct ("Not Done Yet", "These tools have not been created yet!", "markdown")
    --
    transport_ReturnPageArray it
@@ -93,7 +99,7 @@ end form_AddDefault
 
 on form_EditTitle
    transport_SetInfo wikiDomain, pageSlug, pageTitle
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    --
    put pageArray_EditTitle (pageArray, pageTitle) into pageArray
    transport_ReturnPageArray pageArray
@@ -132,7 +138,7 @@ end create_Page
 on compact_Refs
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    pageArray_CompactRefs pageArray
    transport_ReturnPageArray pageArray
 end compact_Refs
@@ -140,7 +146,7 @@ end compact_Refs
 on strip_Journal
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    pageArray_StripJournal pageArray
    delete variable pageArray ["plugin"]
    --
@@ -150,7 +156,7 @@ end strip_Journal
 on fork_Cleaner
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    pageArray_CleanJournal pageArray, "create,fork"
    transport_ReturnPageArray pageArray
 end fork_Cleaner
@@ -164,7 +170,7 @@ on addFedwiki
       if extraDomain is not false then put comma & extraDomain after forkDomains
    end repeat
    --
-   put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
+   put _PageArray (wikiDomain, pageSlug) into pageArray
    pageArray_StripJournal pageArray
    pageArray_AddFork pageArray, forkDomains
    transport_ReturnPageArray pageArray
@@ -172,7 +178,7 @@ end addFedwiki
 
 on fix_Title
    put transport_DroppedUrl ($_POST_RAW) into droppedURL
-   put pageArray_Fetch (droppedURL) into pageArray
+   put _PageArray (droppedURL) into pageArray
    if pageArray is false then
       put merge ("The dropped url [[droppedURL]] is not a Fedwiki url.") into errorText
       transport_ExitAndReturnError errorText, "Not a Fedwiki URL"
@@ -190,7 +196,7 @@ end fix_Title
 
 on clean_FirstLetter
    put transport_DroppedUrl ($_POST_RAW) into droppedURL
-   put pageArray_Fetch (droppedURL) into pageArray
+   put _PageArray (droppedURL) into pageArray
    --
    put pageArray ["Title"] into pageTitle
    put toUpper (char 1 of pageTitle) into char 1 of pageTitle

@@ -42,25 +42,25 @@ on create_Image
 end create_Image
 
 -- command wiki_CreateImage sImage, fExt
-   put md5_Hash (sImage) & "." & fExt into shortImageFile
-   put wikiFile_ConstructImageAsset (shortImageFile, wikiDomain) into imageFile
-   -- hardlink_Create imageFile, commonsFile
-   
-   put itemArray ["id"] into sID
-   --
-   put itemArray_Construct ("image", sID, imageCaption) into imageArray
-   put imageURL into imageArray ["url"]
-   put "wide" into imageArray ["size"]
-   put imageLink into imageArray ["source"]
-   /*
-   put sWidth into imageArray ["width"]
-   put sHeight into imageArray ["height"]
-   */
-   
-   put pageArray_Construct ("Converted Image", "here is an image...") into pageArray
-   itemArray_Add imageArray, pageArray
+put md5_Hash (sImage) & "." & fExt into shortImageFile
+put wikiFile_ConstructImageAsset (shortImageFile, wikiDomain) into imageFile
+-- hardlink_Create imageFile, commonsFile
+
+put itemArray ["id"] into sID
+--
+put itemArray_Construct ("image", sID, imageCaption) into imageArray
+put imageURL into imageArray ["url"]
+put "wide" into imageArray ["size"]
+put imageLink into imageArray ["source"]
+/*
+put sWidth into imageArray ["width"]
+put sHeight into imageArray ["height"]
+*/
+
+put pageArray_Construct ("Converted Image", "here is an image...") into pageArray
+itemArray_Add imageArray, pageArray
 end wiki_CreateImage
-   
+
 on extract_ConceptGraph
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    if pageTitle is empty then
@@ -108,36 +108,66 @@ end summary_Graph
 on add_Audio
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into hiddenArray
-   if pageTitle is empty then put fedwiki_ConstructTitle(pageSlug) into pageTitle
    
-   /* Only works if not a ghost page
-   put pageArray_Get (pageSlug, wikiDomain) into pageArray
-   put pageArray ["story"][3] into tItemArray
-   put tItemArray ["text"] into sTranslation
-   */
    put hiddenArray ["sLang"] into sLang
-   get hiddenArray ["eTranslation"]
-   put urldecode (it) into sTranslation
+   get hiddenArray ["translatedTitle"]
+   put urldecode (it) into translatedTitle
    put hiddenArray ["voice"] into whisperVoice
    put hiddenArray ["useHD"] into useHD
    
+   get hiddenArray ["eTranslation"]
+   put urldecode (it) into sTranslation
+   
+   _CreateAndGhost whisperVoice, pageSlug, sLang, wikiDomain, translatedTitle, sTranslation, pageTitle, useHD
+end add_Audio
+
+on add_PageAudio
+   transport_SetInfo wikiDomain, pageSlug, pageTitle
+   put the result into hiddenArray
+   
+   put hiddenArray ["sLang"] into sLang
+   put hiddenArray ["voice"] into whisperVoice
+   put hiddenArray ["useHD"] into useHD
+   
+   get hiddenArray ["translatedTitle"]
+   put urldecode (it) into translatedTitle
+   replace "?" with empty in translatedTitle
+   put fedwiki_ConstructSlug (translatedTitle) into translatedSlug
+   put pageArray_Get (wikiDomain, translatedSlug) into pageArray
+   
+   put pageArray ["story"][3] into tItemArray
+   put tItemArray ["text"] into sTranslation
+   
+   if sTranslation is empty then
+      put pageArray_Construct ("Error", "Translated text seems empty?", "markdown") into pageArray
+      transport_ReturnPageArray pageArray
+   else
+      put pageArray ["title"] into translatedTitle
+      _CreateAndGhost whisperVoice, pageSlug, sLang, wikiDomain, translatedTitle, sTranslation, translatedTitle, useHD
+   end if
+end add_PageAudio
+
+private command _CreateAndGhost whisperVoice, pageSlug, sLang, wikiDomain, translatedTitle, sTranslation, pageTitle, useHD
+   if pageTitle is empty then put fedwiki_ConstructTitle (pageSlug) into pageTitle
+   --
    put pageSlug & "-" & sLang & ".mp3" into relAssetPath
    put wikiFile_ConstructAsset (relAssetPath, wikiDomain) into audioFile
    put wikiUrl_Asset (relAssetPath, wikiDomain) into audioUrl
    --
-   put pageArray_Construct (pageTitle, sTranslation, "markdown") into pageArray
+   put pageArray_Construct (translatedTitle, sTranslation, "markdown") into pageArray
    
    # Add Audio Player
+   put "#" && sLang && "Translation" into sTitle
+   pageArray_AddMarkdown pageArray, sTitle
    put "[[" & pageTitle & "]]" && "translated into" && sLang into aText
-   -- put "# Cloned Voice" into stitle
-   put "#" && sLang && "Translation" into stitle
-   pageArray_AddMarkdown pageArray, stitle
    pageArray_AddAudio pageArray, audioUrl, aText
    --
    openAI_TextToSpeech sTranslation, audioFile, whisperVoice, useHD
    --
+   pageArray_StripJournal pageArray
+   pageArray_AddChatGptCred pageArray
    transport_ReturnPageArray pageArray
-end add_Audio
+end _CreateAndGhost
 
 on translate_Welsh
    -- a test

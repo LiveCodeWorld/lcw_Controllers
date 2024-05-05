@@ -4,85 +4,7 @@ getprop dep_StackNames
 end dep_StackNames
 
 
---> Deps
--
-function _DomainFromReferer requestArray
-   put daemon_ReceivedHeader ("Referer", requestArray) into sReferer
-   set the itemdelimiter to slash
-   put item 3 of sReferer into wikiDomain
-   return wikiDomain
-end _DomainFromReferer
-
-function daemon_ReceivedHeader sKey, requestArray
-   put _ReceivedHeaderArray (requestArray) into receivedHeaderArray
-   put word 1 to -1 of receivedHeaderArray [sKey] into sValue
-   return sValue
-end daemon_ReceivedHeader
-   
-private function _ReceivedHeaderArray requestArray
-   put requestArray ["receivedHeaders"] into receivedHeaderArray
-   split receivedHeaderArray with CR and ":"
-   return receivedHeaderArray
-end _ReceivedHeaderArray
-
-
---> Roster | Update
--
-on dynadot_SitesIndex
-   /*
-   put postArray ["wikiDomain"] into wikiDomain
-   if wikiDomain is empty then put _RefererDomain() into wikiDomain
-   federation_ReturnSitesPageArray wikiDomain, pageTitle
-   put wikiPage_FilteredDomainList (filterWord, domainIndexTitle) into pageArray
-   put roster_ConstructActivityPage (wikiDomain, rosterDomains, templatePageArray) into pageArray
-   */
-   
-   put transport_GetDroppedArray() into postArray
-   put postArray ["pageTitle"] into pageTitle
-   if pageTitle is empty then put "Wiki Sites" into pageTitle
-   put postArray ["filterWord"] into filterWord
-   
-   put dynadot_ListDomainNames() into wikiDomains
-   if filterWord is not empty then
-      filter wikiDomains with filterWord
-   end if
-   
-   put "Here is a list of domain names hosted on Dynadot:"  into firstPara
-   put wikiPage_CreateMissingSites (pageTitle, wikiDomains, firstPara) into pageArray
-   -- put wikiPage_FilteredSites (pageTitle, wikiDomains, firstPara) into pageArray
-   --
-   transport_ReturnPageArray pageArray
-end dynadot_SitesIndex
-
-on update_RosterPage requestArray
-   transport_SetInfo wikiDomain, pageSlug, pageTitle
-   put the result into postArray
-   put postArray ["filterWord"] into filterWord
-   if filterWord is empty then
-      put _DomainFromReferer (requestArray) into wikiDomain
-      set the itemdelimiter to "."
-      get item -2 to -1 of wikiDomain
-      --
-      put "*" & it into filterWord
-      put it && "Sites" into domainIndexTitle
-      replace "." with space in domainIndexTitle
-      put text_InitialCaps (domainIndexTitle) into domainIndexTitle
-   end if
-   --
-   put wikiPage_FilteredDomainList (filterWord, domainIndexTitle) into pageArray
-   -- get roster_ConstructActivityPage (wikiDomain, rosterDomains, templatePageArray)
-   transport_ReturnPageArray pageArray
-end update_RosterPage
-
-on update 
-   -- update a roster
-   _SetPostVars itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
-   --
-   put roster_FetchUpdatedPageArray (domainFilter, templateDomain, templateSlug, pItemID) into pageArray
-   transport_ReturnPageArray pageArray   
-end update
-
-function roster_FetchUpdatedPageArray domainFilter, templateDomain, templateSlug, pItemID
+function wikiPage_UpdatedRoster domainFilter, templateDomain, templateSlug, pItemID
    if domainFilter = "top" then
       put atopia_FetchRoster() into domainNames
       put url_ListTopDomains (domainNames) into domainNames
@@ -110,13 +32,89 @@ function roster_FetchUpdatedPageArray domainFilter, templateDomain, templateSlug
    --
    pageArray_StripJournal pageArray
    return pageArray
-end roster_FetchUpdatedPageArray
+end wikiPage_UpdatedRoster
+
+
+--> Roster | Update
+-
+on dynadot_SitesIndex
+   /*
+   put postArray ["wikiDomain"] into wikiDomain
+   if wikiDomain is empty then put _RefererDomain() into wikiDomain
+   federation_ReturnSitesPageArray wikiDomain, pageTitle
+   put wikiPage_SitesIndex (filterWord, domainIndexTitle) into pageArray
+   put roster_ConstructActivityPage (wikiDomain, rosterDomains, templatePageArray) into pageArray
+   */
+   
+   put transport_GetDroppedArray() into postArray
+   put postArray ["pageTitle"] into pageTitle
+   if pageTitle is empty then put "Wiki Sites" into pageTitle
+   put postArray ["filterWord"] into filterWord
+   
+   put dynadot_ListDomainNames() into wikiDomains
+   if filterWord is not empty then
+      filter wikiDomains with filterWord
+   end if
+   
+   put "Here is a list of domain names hosted on Dynadot:"  into firstPara
+   put wikiPage_CreateMissingSites (pageTitle, wikiDomains, firstPara) into pageArray
+   --
+   transport_ReturnPageArray pageArray
+end dynadot_SitesIndex
+
+on update_RosterPage requestArray
+   transport_SetInfo wikiDomain, pageSlug, pageTitle
+   put the result into postArray
+   put postArray ["filterWord"] into filterWord
+   if filterWord is empty then
+      put _DomainFromReferer (requestArray) into wikiDomain
+      set the itemdelimiter to "."
+      get item -2 to -1 of wikiDomain
+      --
+      put "*" & it into filterWord
+      put it && "Sites" into domainIndexTitle
+      replace "." with space in domainIndexTitle
+      put text_InitialCaps (domainIndexTitle) into domainIndexTitle
+   end if
+   --
+   put wikiPage_SitesIndex (filterWord, domainIndexTitle) into pageArray
+   -- get roster_ConstructActivityPage (wikiDomain, rosterDomains, templatePageArray)
+   transport_ReturnPageArray pageArray
+end update_RosterPage
+
+on update 
+   -- update a roster
+   _SetPostVars itemID, domainFilter, templateSlug, templateDomain, minPageNum, outputType
+   --
+   put wikiPage_UpdatedRoster (domainFilter, templateDomain, templateSlug, pItemID) into pageArray
+   transport_ReturnPageArray pageArray   
+end update
 
 on index 
    put atopia_FetchRoster() into wikiDomains
    get roster_ConstructPageArray (wikiDomains)
    transport_ReturnPageArray it
 end index
+
+on create_ActivityIndex
+   put daemon_WikiDomain() into wikiDomain
+   put wikiPage_ActivityIndex (wikiDomain) into pageArray
+   transport_ReturnPageArray pageArray
+end create_ActivityIndex
+
+on create_DomaonActivity
+   -- transport_Echo
+   put daemon_WikiDomain() into wikiDomain
+   put wikiPage_SitesActivity (wikiDomain) into pageArray
+   transport_ReturnPageArray pageArray
+end create_DomaonActivity
+
+on create_DomainIndex
+   -- transport_Echo
+   put daemon_WikiDomain() into wikiDomain
+   put wikiPage_SitesIndex (wikiDomain) into pageArray
+   transport_ReturnPageArray pageArray
+end create_DomainIndex
 
 on sites
    _SetFormTitleDomain wikiDomain, pageTitle
@@ -292,6 +290,25 @@ end activity
 
 --> Private
 -
+function daemon_ReceivedHeader sKey, requestArray
+   put _ReceivedHeaderArray (requestArray) into receivedHeaderArray
+   put word 1 to -1 of receivedHeaderArray [sKey] into sValue
+   return sValue
+end daemon_ReceivedHeader
+
+function _DomainFromReferer requestArray
+   put daemon_ReceivedHeader ("Referer", requestArray) into sReferer
+   set the itemdelimiter to slash
+   put item 3 of sReferer into wikiDomain
+   return wikiDomain
+end _DomainFromReferer
+
+private function _ReceivedHeaderArray requestArray
+   put requestArray ["receivedHeaders"] into receivedHeaderArray
+   split receivedHeaderArray with CR and ":"
+   return receivedHeaderArray
+end _ReceivedHeaderArray
+
 private function _RefererDomain
    set the itemdelimiter to slash
    put item 3 of $HTTP_REFERER into wikiDomain
@@ -302,7 +319,7 @@ private command _SetFormTitleDomain @wikiDomain, @pageTitle
    put transport_GetDroppedArray() into postArray
    put postArray ["wikiDomain"] into wikiDomain
    if wikiDomain is empty then put _RefererDomain() into wikiDomain
-
+   
    put postArray ["pageTitle"] into pageTitle
    return postArray
 end _SetFormTitleDomain
