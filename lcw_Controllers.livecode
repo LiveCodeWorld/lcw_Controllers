@@ -17,9 +17,9 @@ end project_Deps
 
 --> Custom
 -
-command project_CustomInit
+command project_PostInit
    -- your code here
-end project_CustomInit
+end project_PostInit
 
 
 --> Events
