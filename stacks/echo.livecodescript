@@ -3,43 +3,13 @@ getprop dep_StackNames
    return "lib_Fedwiki,lib_PageArray,model_PageArray"
 end dep_StackNames
 
+getprop index_Array
+   put _Index() into pageArray
+   return pageArray
+end index_Array
+
 on index
-   put _ConstructTestText() into someMarkdown
-   -- put fedray_FetchDomains ("voz.money") into rosterDomains
-   put $_SERVER into tServerArray
-   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
-   -- combine tServerArray using CR and space -- makes a list for presenting
-   
-   put "# PATH_TRANSLATED" & CR after someMarkdown
-   -- PATH_TRANSLATED /var/www/rest.livecode.world/index.lc
-   put pathTranslated & CR after someMarkdown
-   
-   put "# HTTP_REFERER" & CR after someMarkdown
-   put $HTTP_REFERER & CR after someMarkdown
-   
-   put cgi_TextPath ("hello.txt") into filePath
-   put url ("file:" & filePath) into someText
-   put CR after someMarkdown
-   
-   put "# gRoute" & CR after someMarkdown
-   put the keys of gRoute & CR after someMarkdown
-   put gRoute[2]["journals"] & CR after someMarkdown
-   put the keys of gRoute[3] & CR after someMarkdown
-   
-   put "# Hello World" & CR after someMarkdown
-   put someText & CR after someMarkdown
-   
-   -- put CR & "# Headers" after someMarkdown
-   -- put libUrlLastRhHeaders() & CR after someMarkdown
-   
-   -- now write to database
-   put CR after someMarkdown
-   put "Hello world!" && the ticks into url ("file:" & textPath)
-   
-   put keys (tServerArray) & CR after someMarkdown
-   put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
-   --
-   put pageArray_Construct ("Echo", someMarkdown) into pageArray
+   put _Index() into pageArray
    transport_ReturnPageArray pageArray
 end index
 
@@ -66,7 +36,57 @@ function cgi_TextPath shortFile
    return textPath
 end cgi_TextPath
 
-function _ConstructTestText
+on myip
+   if the platform is not "server" then return empty
+   --
+   put rigIpAddress() after myIP
+   put myIP
+end myip
+
+on postraw
+   set the itemdelimiter to "&"
+   repeat for each item tVariablePair in $_POST_RAW
+      set the itemdelimiter to "="
+      put urlDecode(item 1 of tVariablePair) into tVariableKey
+      put urlDecode(item 2 of tVariablePair) into tVariableValue
+      -- do something with key and value --
+      put  tVariableKey & ":" && tVariableValue & CR after someText
+      set the itemdelimiter to "&"
+   end repeat
+   put someText
+end postraw
+
+on server
+   put $_SERVER into someText
+   combine someText using CR and space
+   put someText
+end server
+
+
+--> Private
+-
+function _Index rArray
+   put _ConstructTestText() into someMarkdown
+   -- put fedray_FetchDomains ("voz.money") into rosterDomains
+   put $_SERVER into tServerArray
+   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
+   -- combine tServerArray using CR and space -- makes a list for presenting
+   
+   # PATH_TRANSLATED /var/www/rest.livecode.world/index.lc
+   put "# PATH_TRANSLATED" & CR after someMarkdown
+   put pathTranslated & CR after someMarkdown
+   
+   put "# HTTP_REFERER" & CR after someMarkdown
+   put $HTTP_REFERER & CR after someMarkdown
+      
+   put keys (tServerArray) & CR after someMarkdown
+   put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
+   --
+   put pageArray_Construct ("Echo", someMarkdown) into pageArray
+   return pageArray
+end _Index
+
+private function _ConstructTestText
    local someText
    
    put "# Dropped URL transport_DroppedUrl()" & CR after someText
@@ -108,7 +128,27 @@ function _ConstructTestText
    return someText
 end _ConstructTestText
 
-function _MoreText
+private command _TestReadWrite @someMarkdown
+   put cgi_TextPath ("hello.txt") into filePath
+   put url ("file:" & filePath) into someText
+   put CR after someMarkdown
+    
+   put "# Hello World" & CR after someMarkdown
+   put someText & CR after someMarkdown
+   
+   -- now write to database
+   put CR after someMarkdown
+   put "Hello world!" && the ticks into url ("file:" & filePath)
+end _TestReadWrite
+
+private command _AddRoute @someMarkdown
+   put "# gRoute" & CR after someMarkdown
+   put the keys of gRoute & CR after someMarkdown
+   put gRoute[2]["journals"] & CR after someMarkdown
+   put the keys of gRoute[3] & CR after someMarkdown
+end _AddRoute
+
+private function _MoreText
    if the platform is not "server" then return empty
    
    put rigUserAgent() into tUserAgent
@@ -126,29 +166,3 @@ function _MoreText
    end repeat
    return someText
 end _MoreText
-
-on myip
-   if the platform is not "server" then return empty
-   --
-   put rigIpAddress() after myIP
-   put myIP
-end myip
-
-on postraw
-   set the itemdelimiter to "&"
-   repeat for each item tVariablePair in $_POST_RAW
-      set the itemdelimiter to "="
-      put urlDecode(item 1 of tVariablePair) into tVariableKey
-      put urlDecode(item 2 of tVariablePair) into tVariableValue
-      -- do something with key and value --
-      put  tVariableKey & ":" && tVariableValue & CR after someText
-      set the itemdelimiter to "&"
-   end repeat
-   put someText
-end postraw
-
-on server
-   put $_SERVER into someText
-   combine someText using CR and space
-   put someText
-end server
