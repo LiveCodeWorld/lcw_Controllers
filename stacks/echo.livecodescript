@@ -4,14 +4,35 @@ getprop dep_StackNames
 end dep_StackNames
 
 getprop index_Array
-   put _Index() into pageArray
+   put echo_PageArray() into pageArray
    return pageArray
 end index_Array
 
 on index
-   put _Index() into pageArray
+   put echo_PageArray() into pageArray
    transport_ReturnPageArray pageArray
 end index
+
+function echo_PageArray
+   put _ConstructTestText() into someMarkdown
+   -- put fedray_FetchDomains ("voz.money") into rosterDomains
+   put $_SERVER into tServerArray
+   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
+   -- combine tServerArray using CR and space -- makes a list for presenting
+   
+   # PATH_TRANSLATED /var/www/rest.livecode.world/index.lc
+   put "# PATH_TRANSLATED" & CR after someMarkdown
+   put pathTranslated & CR after someMarkdown
+   
+   put "# HTTP_REFERER" & CR after someMarkdown
+   put $HTTP_REFERER & CR after someMarkdown
+   
+   put keys (tServerArray) & CR after someMarkdown
+   put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
+   --
+   put pageArray_Construct ("Echo", someMarkdown) into pageArray
+   return pageArray
+end echo_PageArray
 
 on scaffold
    transport_SetFormSlugDomain wikiDomain, pageSlug
@@ -65,27 +86,6 @@ end server
 
 --> Private
 -
-function _Index rArray
-   put _ConstructTestText() into someMarkdown
-   -- put fedray_FetchDomains ("voz.money") into rosterDomains
-   put $_SERVER into tServerArray
-   put tServerArray ["PATH_TRANSLATED"] into pathTranslated
-   -- combine tServerArray using CR and space -- makes a list for presenting
-   
-   # PATH_TRANSLATED /var/www/rest.livecode.world/index.lc
-   put "# PATH_TRANSLATED" & CR after someMarkdown
-   put pathTranslated & CR after someMarkdown
-   
-   put "# HTTP_REFERER" & CR after someMarkdown
-   put $HTTP_REFERER & CR after someMarkdown
-      
-   put keys (tServerArray) & CR after someMarkdown
-   put the filename of me & CR after someMarkdown -- /var/www/rest.livecode.world/index.lc is not what we want
-   --
-   put pageArray_Construct ("Echo", someMarkdown) into pageArray
-   return pageArray
-end _Index
-
 private function _ConstructTestText
    local someText
    

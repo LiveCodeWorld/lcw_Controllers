@@ -11,12 +11,19 @@ on create_Image
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into valueArray
    put valueArray ["imagePrompt"] into imagePrompt
-   
+   --
+   prompt_CreateImage imagePrompt, pageSlug, wikiDomain
+   put the result into pageArray
+   --
+   transport_ReturnPageArray pageArray  
+end create_Image
+
+command prompt_CreateImage imagePrompt, pageSlug, wikiDomain
    # Generate image
    put openAI_GenerateImageArray (imagePrompt) into imageArray
+   --
    openAI_DeconstructImageArray imageArray, sImage, revisedPrompt
    put md5_Hash (sImage) & ".jpg" into shortFile
-   -- put "openai_" & pageSlug & ".jpg" into shortFile
    
    # Construct imageFile
    put wikiFolder_ConstructPageAssets (pageSlug, wikiDomain) into pageFolder
@@ -38,8 +45,8 @@ on create_Image
    folder_CreateNested pageFolder
    put sImage into url ("binfile:/" & imageFile)
    --
-   transport_ReturnPageArray pageArray  
-end create_Image
+   return pageArray
+end prompt_CreateImage
 
 -- command wiki_CreateImage sImage, fExt
 put md5_Hash (sImage) & "." & fExt into shortImageFile
@@ -179,7 +186,7 @@ on translate_Welsh
    --
    transport_ReturnPageArray pageArray
 end translate_Welsh
-   
+
 on extract_Keywords
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
