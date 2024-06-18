@@ -12,16 +12,16 @@ end index
 on summary
    put transport_DroppedUrl() into droppedURL
    put transport_DroppedValue ("title") into searchString
-   mediawiki_NormaliseTitle searchString, pageTitle, pageID
+   mediawiki_NormaliseTitle searchString, pTitle, pageID
    --
    switch
       case droppedURL is not empty
          put index_GetPageArray (droppedURL) into pageArray
          break
       case pageID is a number
-         put mediawiki_FetchSummaryPageArray (pageTitle) into pageArray
-         -- put fedwikipedia_FetchSectionSummaryPageArray (pageTitle, 2) into pageArray
-         -- put fedwiki_FetchWikipediaSummaryPageArray (pageTitle) into pageArray
+         put mw_SummaryPageArray (pTitle) into pageArray
+         -- put fedwikipedia_FetchSectionSummaryPageArray (pTitle, 2) into pageArray
+         -- put fedwiki_FetchWikipediaSummaryPageArray (pTitle) into pageArray
          break
       default
          put "Cannot locate" && kwote (searchString) into sText
@@ -32,10 +32,10 @@ on summary
 end summary
 
 on toc
-   put transport_DroppedValue ("pageTitle") into pageTitle
+   put transport_DroppedValue ("pTitle") into pTitle
    --
-   put mediaWiki_ConstructSlug (pageTitle) into pageSlug
-   put "Here is a table of contents for the Wikipedia Page" && kwote (pageTitle) into someMarkdown
+   put mediaWiki_ConstructSlug (pTitle) into pageSlug
+   put "Here is a table of contents for the Wikipedia Page" && kwote (pTitle) into someMarkdown
    put pageArray_Construct ("Table of Contents", someMarkdown) into pageArray
    
    # Add TOC Section
@@ -49,9 +49,9 @@ on toc
 end toc
 
 on tocButtons
-   put transport_DroppedValue ("pageTitle") into pageTitle
+   put transport_DroppedValue ("pTitle") into pTitle
    --
-   put wikiPage_TocButtons (pageTitle) into pageArray
+   put wikiPage_TocButtons (pTitle) into pageArray
    transport_ReturnPageArray pageArray
 end tocButtons
 
@@ -71,21 +71,8 @@ end provenance
 
 on form
    put transport_GetDroppedArray() into postedArray
-   put postedArray ["title"] into pageTitle
-   put postedArray ["url"] into postedURL
    --
-   switch
-      case postedURL is not empty
-         put dropArray_WikiPage (postedURL) into pageArray
-         break
-      case pageTitle is not empty
-         put mediawiki_FetchSummaryPageArray (pageTitle) into pageArray
-         -- put mediawiki_FetchPageArray (droppedURL) into pageArray
-         -- put mediawiki_GetPageArrayFromSlug (pageTitle) into pageArray
-         break
-      default
-         put pageArray_Construct ("Error", "Failed to post a wikipedia url or title to form!") into pageArray
-   end switch
+   put postArray_MediaWiki(postedArray) into pageArray
    --
    transport_ReturnPageArray pageArray
 end form
@@ -112,8 +99,8 @@ end wikipage
 
 on favicon
    transport_SetDroppedFaviconInfo fedwikiSlug, fedwikiDomain
-   mediawiki_NormaliseTitle fedwikiSlug, pageTitle, pageID
-   put "https://en.wikipedia.org/wiki/" & pageTitle into wikipediaUrl
+   mediawiki_NormaliseTitle fedwikiSlug, pTitle, pageID
+   put "https://en.wikipedia.org/wiki/" & pTitle into wikipediaUrl
    put the result into batchArray
    put mediawiki_FetchPageArray (wikipediaURL) into pageArray
    transport_ReturnPageArray pageArray
@@ -146,10 +133,10 @@ on section
    -- imports multiple subsections
    put transport_DroppedUrl() into droppedURL
    switch
-      case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
+      case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pTitle, sectionNum)
          set the itemdelimiter to slash
          put item 1 to 3 of droppedURL into apiStem -- https://en.wikipedia.org
-         put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, droppedURL) into pageArray
+         put wikicommons_ConstructSectionPageArray (pTitle, sectionNum, droppedURL) into pageArray
          transport_ReturnPageArray pageArray
          break
       default
@@ -166,6 +153,28 @@ command thumbNail droppedHTML
    transport_ReturnJSON pageJSON
 end thumbNail
 
+
+--> Functions
+-
+function postarray_Mediawiki postedArray
+   put postedArray ["title"] into pTitle
+   put postedArray ["url"] into postedURL
+   put textDecode (pTitle, "utf-8") into pTitle
+   --
+   switch
+      case postedURL is not empty
+         put dropArray_WikiPage (postedURL) into pArray
+         break
+      case pTitle is not empty
+         put mw_SummaryPageArray (pTitle) into pArray
+         break
+      default
+         get "Error", "wikipedia url pTitle is empty"
+         put pageArray_Construct (it) into pArray
+   end switch
+   return pArray
+end postarray_Mediawiki
+
 function index_GetPageArray droppedURL
    switch
       case isFavicon
@@ -175,10 +184,10 @@ function index_GetPageArray droppedURL
       case matchText (droppedURL, "https://(.+).wikipedia.org/wiki/(.+)#/media/File:(.+)", wikiLanguage, wikiSlug, shortImageFile)
          put wikicommons_FetchImagePageJson (shortImageFile) into pageJSON
          break
-      case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pageTitle, sectionNum)
+      case matchText (droppedURL, "^https:\/\/(..)\.wikipedia.org\/w\/index.php\?title=(.+)&action=edit&section=(.+)$", someLang, pTitle, sectionNum)
          set the itemdelimiter to slash
          put item 1 to 3 of droppedURL into apiStem -- https://en.wikipedia.org
-         put wikicommons_ConstructSectionPageArray (pageTitle, sectionNum, apiStem) into pageArray
+         put wikicommons_ConstructSectionPageArray (pTitle, sectionNum, apiStem) into pageArray
          break
       case matchText (droppedURL, "https://www.gameb.wiki/index.php\?title=(.+)", wikiSlug)
       case matchText (droppedURL, "https://sterbalssundrystudies.miraheze.org/wiki/(.+)", wikiSlug)
@@ -202,9 +211,9 @@ function index_GetPageArray droppedURL
          put wikicommons_ConstructVideoPageArray ("Wikimedia Video", someText, droppedURL, shortVideoFile) into pageArray
          break
       case matchText (droppedURL, "https://commons.wikimedia.org/wiki/(File:.+)", shortImageFile)
-         put "Wikimedia Image" into pageTitle
+         put "Wikimedia Image" into pTitle
          put "Drag these images to your source page..." into someText
-         put pageArray_Construct (pageTitle, someText) into pageArray   
+         put pageArray_Construct (pTitle, someText) into pageArray   
          wikicommons_FetchAndAddTwoImages pageArray, shortImageFile
          pageArray_CleanJournal pageArray
          break
