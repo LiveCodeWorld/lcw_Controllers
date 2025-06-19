@@ -1,25 +1,27 @@
 ﻿script "transcribe.lc"
 getprop dep_StackNames
-   return ""
+   return "lcw_Media"
 end dep_StackNames
 
+
+--> Transporter
+-
 on index
    transport_SetInfo wikiDomain, pageSlug, pageTitle
-   put transcribe_ConstructWavFile (pageSlug) into wavFile
-   
-   # Transcode audio
-   if there is a file wavFile then
-      -- put whisper_GetTranscript (wavFile) into sTranscript
-      whisper_CreateTranscript wavFile
-      put the result into sTranscript
-      
-      put pageArray_Construct ("Transcript", sTranscript, "markdown") into pageArray 
-   else
-      put pageArray_Construct ("Error", "Converted wav file does not exist!", "markdown") into pageArray 
-   end if
+   --
+   put magic_CreateTranscript (pageSlug) into pageArray
    --
    transport_ReturnPageArray pageArray
 end index
+
+on process_Page
+   local pPort
+   transport_SetInfo wikiDomain, pageSlug, pageTitle
+   --
+   put pageArray_FetchText (wikiDomain, pageSlug, pPort) into pageArray
+   --
+   transport_ReturnPageArray pageArray
+end process_Page
 
 on ghost_AudioFolderPage
    transport_SetInfo wikiDomain, audioPageSlug, audioPageTitle
@@ -28,6 +30,7 @@ on ghost_AudioFolderPage
    
    # Construct pageArray
    put wikiPage_AudioFolder (folderPageTitle, wikiDomain) into pageArray
+   --
    transport_ReturnPageArray pageArray
 end ghost_AudioFolderPage
 
@@ -35,18 +38,10 @@ on record_Audio
    transport_SetInfo wikiDomain, audioPageSlug, audioPageTitle
    put the result into valueArray
    put valueArray ["folderPageTitle"] into folderPageTitle
-   
-   put wikiFile_Construct (wikiDomain, folderPageTitle) into wikiFile
-   if there is a file wikiFile then
-      put _RecordingProgressPageArray (audioPageTitle, valueArray) into pageArray
-   else
-      put fedwiki_ConstructSlug (folderPageTitle) into folderPageSlug
-      put _RecordingFolderPageArray (valueArray, wikiDomain, folderPageSlug, folderPageTitle) into pageArray
-   end if
-   
-   # Start Recording Audio
-   audio_RecordTranscriptWav audioPageTitle, folderPageTitle, wikiDomain
-   
+   --
+   record_Start wikiDomain, folderPageTitle, valueArray
+   put the result into pageArray
+   --
    transport_ReturnPageArray pageArray
 end record_Audio
 
@@ -55,16 +50,15 @@ on stop_Recording
    put the result into valueArray
    --
    audio_StopRecordingAndCreate valueArray
-   put the result into stoppedPageArray
-   transport_ReturnPageArray stoppedPageArray
+   put the result into pageArray
+   
+   transport_ReturnPageArray pageArray
 end stop_Recording
 
-on tidy_Transcript  
+on tidy_Transcript
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put transcribe_GetWavText (pageSlug, wikiDomain) into sTranscript   
-   put wikiPage_CombinedTranscript (sTranscript, pageTitle, pageSlug, wikiDomian, pageTitle) into pageArray
-   -- put _TidyPageArray (sTranscript) into pageArray
+   put magic_TidyTranscript (pageSlug, wikiDomain, pageTitle) into pageArray
    --
    transport_ReturnPageArray pageArray
 end tidy_Transcript
@@ -72,16 +66,8 @@ end tidy_Transcript
 on create_Transcript
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put wikiFile_Construct (wikiDomain, pageSlug) into wikiFile
-   if there is a file wikiFile then
-      put "Page [[" & pageTitle & "]] already exists!" into someMarkdown
-      put pageArray_Construct ("Eror", someMarkdown, "markdown") into pageArray
-   else
-      put transcribe_GetWavText (pageSlug, wikiDomain) into sTranscript
-      put pageTitle into tShortTitles
-      put wikiPage_CombinedTranscript (sTranscript, pageTitle, pageSlug, wikiDomian, tShortTitles) into pageArray
-   end if
-   
+   put magic_Tidy (wikiDomain, pageSlug, pageTitle)
+   --
    transport_ReturnPageArray pageArray
 end create_Transcript
 
@@ -90,15 +76,9 @@ on summarize
    put the result into valueArray
    --
    lcw_Notify "Transcribing the audio."
-   put transcribe_GetWavText (pageSlug, wikiDomain) into sTranscript
-   
    lcw_Notify "Using the 'graph-and-summary' prompt to replace the summary section. This may take some time."
-   put openAI_GetText (sTranscript, "graph-and-summary", "gpt-4") into mdText
    --
-   put pageArray_Get (wikiDomain, pageSlug) into pageArray
-   wikiPage_ReplaceTranscriptSummary pageArray, mdText
-   --
-   curly_ReplacePageArray pageArray, "folderPageTitle", pageTitle
+   put magic_Summarize (pageSlug, wikiDomain) into pageArray
    --
    transport_ReturnPageArray pageArray  
 end summarize
@@ -106,13 +86,7 @@ end summarize
 on convert_ToWav
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put transcribe_FindOggFile (pageSlug) into oggFile
-   
-   # Transcode audio
-   transcribe_CreateWav oggFile, pageSlug, wikiDomain
-   put the result into wavFile
-   
-   put pageArray_Construct ("Converted Audio", shellResult, "markdown") into pageArray
+   put magic_ConvertToWav
    --
    transport_ReturnPageArray pageArray
 end convert_ToWav
@@ -121,7 +95,7 @@ on join_Missing
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into valueArray
    put valueArray ["tShortFolders"] into tShortFolders
-   put _CombinedTranscript (tShortFolders, wikiDomain) into sTranscript
+   put transcript_Combine (tShortFolders, wikiDomain) into sTranscript
    
    # Conscrutct Big Transcript
    put pageArray_Construct ("Big Transcript", "This is the combined raw transcript. Use this button to summarise and tidy:", "markdown") into pageArray
@@ -136,9 +110,8 @@ on summarize_Combined
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into valueArray
    put valueArray ["tShortFolders"] into tShortFolders
-   put _CombinedTranscript (tShortFolders, wikiDomain) into sTranscript
    --
-   put wikiPage_CombinedTranscript (sTranscript, pageTitle, pageSlug, wikiDomian, tShortFolders) into pageArray
+   put magic_SummarizeCombined (pageTitle, pageSlug, wikiDomian, tShortFolders) into pageArray
    -- 
    transport_ReturnPageArray pageArray  
 end summarize_Combined
@@ -147,56 +120,8 @@ on create_Missing
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into valueArray
    put valueArray ["rawAudioFile"] into oggFile 
-   
-   # Check if page already exists!
-   put wikiFile_Construct (wikiDomain, pageSlug) into pageJsonFile
-   put pageArray_Get (wikiDomain, pageSlug) into pageArray
-   
-   # Create new pageArray
-   if pageArray is an array then
-      # Add Edit Tools
-      _AddEditTools pageArray, valueArray
-   else -- Create new pageArray
-      # Notify
-      lcw_Notify ("Creating ghost page for" && kwote (pageTitle))
-      
-      # Create wav
-      put transcribe_ConstructWavFile (pageSlug, wikiDomain) into wavFile
-      transcribe_CreateWav oggFile, pageSlug, wikiDomain
-      put the result into wavFile
-      
-      # Transcode audio
-      if there is a file wavFile then         
-         # Transcribe wav file
-         put transcribe_TextFile (pageSlug, wikiDomain) into transcriptFile
-         if there is not a file transcriptFile then
-            lcw_Notify "Transcribing file using Whisper..."
-            
-            set the cursor to watch
-            whisper_CreateTranscript wavFile
-            get the result
-         end if
-         
-         put transcribe_ConstructGraphAndSummaryFile (pageSlug, wikiDomain) into chatGptFile
-         if there is a file chatGptFile then
-            put wikiPage_GetGraphAndSummary (pageSlug, wikiDomain) into pageArray
-         else
-            lcw_Notify "Creating ghost-page using 'Graph and Summary' prompt for ChatGPT. This can take some time..."
-            
-            transcribe_CreateGraphAndSummary pageSlug, wikiDomain
-            put the result into graphAndSummaryText
-            put wikiPage_GetGraphAndSummary (pageSlug, wikiDomain, graphAndSummaryText) into pageArray
-         end if
-         
-         # Add Edit Tools
-         _AddEditTools pageArray, valueArray
-      else
-         put pageArray_Construct ("Error", "Converted wav file does not exist!", "markdown") into pageArray 
-      end if
-   end if
    --
-   put valueArray ["folderPageTitle"] into folderPageTitle 
-   curly_ReplacePageArray pageArray, "folderPageTitle", folderPageTitle
+   put magic_CreateMissingPageArray (wikiDomain, pageSlug, pageTitle, valueArray) into pageArray
    --
    transport_ReturnPageArray pageArray
    wikiServer_Restart
@@ -215,20 +140,15 @@ end create_IfMissing
 on add_ChatGptCred
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    --
-   put pageArray_Get (wikiDomain, pageSlug) into pageArray
-   pageArray_StripJournal pageArray
-   pageArray_AddChatGptCred pageArray
+   put magic_AddCred (wikiDomain, pageSlug) into pageArray
    --
    transport_ReturnPageArray pageArray
 end add_ChatGptCred
 
 on display_Transcript
    transport_SetInfo wikiDomain, pageSlug, pageTitle
-   put the result into valueArray
    --
-   put transcribe_GetWavText (pageSlug, wikiDomain) into sTranscript
-   put pageTitle && "Transcript" into dTitle
-   put pageArray_Construct (dTitle, sTranscript) into pageArray
+   put transcript_ConstructPageArray (pageSlug, wikiDomain, pageTitle) into pageArray
    --
    transport_ReturnPageArray pageArray
 end display_Transcript
@@ -237,15 +157,8 @@ on add_TidiedTranscript
    transport_SetInfo wikiDomain, pageSlug, pageTitle
    put the result into valueArray
    --
-   put transcribe_GetWavText (pageSlug, wikiDomain) into sTranscript
-   if sTranscript is empty then
-      put pageArray_Construct ("Error", "Transcript is empty?", "markdown") into pageArray 
-   else
-      put wikiPage_AddTidiedTranscript (pageSlug, wikiDomain) into pageArray
-   end if
+   put magic_TidyTranscript (pageSlug, wikiDomain) into pageArray
    --
-   pageArray_StripJournal pageArray
-   pageArray_AddChatGptCred pageArray
    transport_ReturnPageArray pageArray
    wikiServer_Restart
 end add_TidiedTranscript
@@ -266,7 +179,7 @@ end _AddEditTools
 
 private function _TidyPageArray sTranscript
    # Tidy using ChatGPT
-   put openAI_GetText (sTranscript, "tidy-hitchhikers", "gpt-4") into mdText
+   put prompt_Process (sTranscript, "tidy-hitchhikers", "gpt-4") into mdText
    
    # Create PageArray
    if mdText is empty then
@@ -306,13 +219,3 @@ private function _RecordingFolderPageArray valueArray, wikiDomain, audioPageSlug
    
    return pageArray
 end _RecordingFolderPageArray
-
-private function _CombinedTranscript tShortFolders, wikiDomain
-   sort numeric items of tShortFolders by word -1 of each
-   repeat for each item tShortFolder in tShortFolders
-      put fedwiki_ConstructSlug (tShortFolder) into pageSlug
-      put transcribe_GetWavText (pageSlug, wikiDomain) & CR after sTranscript
-   end repeat
-   delete char -1 of sTranscript
-   return sTranscript
-end _CombinedTranscript
