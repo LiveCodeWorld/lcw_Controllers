@@ -9,8 +9,29 @@ on index
    transport_ReturnPageArray pageArray
 end index
 
+getprop default_Handler
+   return "index"
+end default_Handler
+
+getprop page_Array [droppedURL]
+   put the default_Handler of me into hName
+   switch hName
+      case "summary"
+         put summary_GetPageArray (droppedURL) into pageArray
+         break
+      default -- "index"
+         put index_GetPageArray (droppedURL) into pageArray
+         return pageArray
+   end switch
+end page_Array
+
 on summary
    put transport_DroppedUrl() into droppedURL
+   put summary_GetPageArray (droppedURL) into pageArray
+   transport_ReturnPageArray pageArray
+end summary
+
+function summary_GetPageArray droppedURL
    put transport_DroppedValue ("title") into searchString
    mediawiki_NormaliseTitle searchString, pTitle, pageID
    --
@@ -27,9 +48,8 @@ on summary
          put "Cannot locate" && kwote (searchString) into sText
          put pageArray_Construct ("Wikipedia Search", sText) into pageArray
    end switch
-   --
-   transport_ReturnPageArray pageArray
-end summary
+   return pageArray
+end summary_GetPageArray
 
 on toc
    put transport_DroppedValue ("pTitle") into pTitle
