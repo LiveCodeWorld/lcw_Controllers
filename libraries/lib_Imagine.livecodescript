@@ -173,37 +173,6 @@ function brew_ListServices
 end brew_ListServices
 
 
---> Platform
--
-function platform_RestUrl restBit
-   put "http://" & platform_RestDomain() into restURL
-   if restBit is not empty then
-      put slash & restBit after restURL
-   end if
-   return restURL
-end platform_RestUrl
-
-function platform_RestPort
-   constant PlatformRestPort = 9090
-   return PlatformRestPort
-end platform_RestPort
-
-function platform_RestDomain
-   return "rest.livecode.wiki"
-end platform_RestDomain
-
-function platform_LivecodeDomain pSubDomain
-   put "livecode.wiki" into platformWikiDomain
-   --
-   if pSubDomain is empty then
-      return platformWikiDomain
-   else
-      text_AddTrailing pSubDomain, "."
-      return pSubDomain & platformWikiDomain
-   end if
-end platform_LivecodeDomain
-
-
 --> Imagine
 -
 

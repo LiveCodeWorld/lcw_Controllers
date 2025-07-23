@@ -51,15 +51,87 @@ function summary_GetPageArray droppedURL
    return pageArray
 end summary_GetPageArray
 
+function mw_SummaryPageArray mwTitle, pLang, pAddToc
+   -- used by "summary" of "mediawiki.lc"
+   -- see also "fedwiki_FetchWikipediaSummaryPageArray"
+   -- very similar to "mediawiki_FetchPageArray"
+   /*   
+   -- consider using "put mediawiki_FetchWikiText("Ant")"
+   -- also uses old "mediawiki_FetchSummaryDescription" to fetch multiple first lines
+   -- as restbase won't do that except in html
+   -- would be great to enable links in first paragraphs like "wikicommons_ConstructSectionPageArray" does
+   -- using sectionnum = 0 does not work with "wikicommons_ConstructSectionPageArray"
+   */
+   
+   put mw_ConstructSlug (mwTitle) into mwSlug
+   put mediawiki_FetchSummaryDescription (mwSlug, true, true, pLang) into firstSection -- uses old stuff anyway to get more than one line
+   put mw_SummaryArray (mwSlug, pLang) into summaryArray -- fetch some metadata
+   put mediawiki_ConstructSummaryPageArray (firstSection, summaryArray) into pageArray
+   
+   # Add TOC Button
+   put platform_RestURL ("mediawiki/tocButtons") into postURL
+   
+   put empty into bgColor
+   put mwTitle into valueArray ["pageTitle"]
+   pageArray_AddButton pageArray, "Table of Contents", postURL, valueArray, "", "right", bgColor
+   
+   if pAddToc is true then
+      # Add TOC Section
+      put mw_MarkdownTOC (mwSlug) into markdownTOC
+      if markdownTOC is not empty then
+         put "# See also" && CR&CR before markdownTOC
+         pageArray_AddMarkdown pageArray, markdownTOC
+      end if
+   end if
+   --
+   pageArray_StripJournal pageArray
+   pageArray_AddWikipediaCred pageArray, mwTitle, mwSlug
+   --
+   return pageArray
+end mw_SummaryPageArray
+
+function mw_PageExtractUrl pageSlug, pFormat, pIntroOnly, pPlain
+   put pIntroOnly is true into pIntroOnly
+   put pPlain is not false into pPlain
+   put "wiki" into pFormat -- "plain or html""
+   
+   put mw_ApiStemFromUrl() into pApiStem
+   put sandbox_ConstructPageQueryFragment (pageSlug, pFormat, pIntroOnly, pPlain) into sandBoxFragment
+   put sandbox_ConstructUrl (sandBoxFragment, pApiRoot) into restURL
+   return restURL
+end mw_PageExtractUrl
+
+function mediawiki_FetchSummaryDescription pageSlug, pIntroOnly, pPlain, pAddCors
+   put mw_ApiStemFromUrl() into pApiStem
+   
+   -- either html, or plain with wiki titles (default)
+   /*
+   -- does't seem to work
+   wiki — e.g., == Wikitext ==
+   plain — no special decoration
+   raw — this extension's internal representation
+   */
+   put pIntroOnly is true into pIntroOnly
+   put pPlain is not false into pPlain
+   put "wiki" into pFormat
+   -- put "plain" into pFormat -- html
+   
+   put sandbox_ConstructPageQueryFragment (pageSlug, pFormat, pIntroOnly, pPlain) into sandBoxFragment
+   put sandbox_FetchData (sandBoxFragment, pApiStem, pAddCors) into sandboxArray
+   sandbox_DeconstructPageArray sandboxArray, pageTitle, pageDescription, shortImageFile, lastRevisionID
+   
+   return pageDescription
+end mediawiki_FetchSummaryDescription
+
 on toc
    put transport_DroppedValue ("pTitle") into pTitle
    --
-   put mediaWiki_ConstructSlug (pTitle) into pageSlug
+   put mw_ConstructSlug (pTitle) into pageSlug
    put "Here is a table of contents for the Wikipedia Page" && kwote (pTitle) into someMarkdown
    put pageArray_Construct ("Table of Contents", someMarkdown) into pageArray
    
    # Add TOC Section
-   put mediawiki_FetchMarkdownTOC (pageSlug) into markdownTOC
+   put mw_MarkdownTOC (pageSlug) into markdownTOC
    if markdownTOC is not empty then
       put "# See also" && CR&CR before markdownTOC
       pageArray_AddMarkdown pageArray, markdownTOC
@@ -81,7 +153,7 @@ on provenance
    put postedArray ["pageSlug"] into pageSlug
    --
    put postedArray ["mwTitle"] into mwTitle
-   put mediaWiki_ConstructSlug (mwTitle) into mwSlug
+   put mw_ConstructSlug (mwTitle) into mwSlug
    -- 
    put pageArray_Fetch (wikiDomain, pageSlug) into pageArray
    pageArray_AddWikipediaCred pageArray, mwTitle, mwSlug
