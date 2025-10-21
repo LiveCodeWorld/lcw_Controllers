@@ -3,6 +3,10 @@ getprop dep_StackNames
    return "lib_Date,lib_Encoding,lib_Fedwiki,lib_Feed,lib_ListenNotes,lib_PageArray,lib_PageSection,lib_XML,model_PageArray"
 end dep_StackNames
 
+getprop index_Array
+   breakoint
+end index_Array
+
 on index
    put transport_DroppedUrl() into droppedURL
    switch
@@ -13,18 +17,24 @@ on index
          transport_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)/(.+)", podcastSlug, episodeSlug)
-         put listenNotes_PageArrayFromScrape (droppedURL) into pageArray
+         put _ListenNotes (droppedURL) into pageArray
          transport_ReturnPageArray pageArray
          break
       case matchtext (droppedURL, "https://www.listennotes.com/podcasts/(.+)", podcastSlug)
          put listenNotes_ScrapePodcastID (droppedURL) into podcastID
-         put listenNotes_FetchPodcastPageArray (podcastID) into pageArray
+         put pageArray_FetchPodcast (podcastID) into pageArray
          transport_ReturnPageArray pageArray
          break
       default
          transport_ExitAndReturnError "Dropped url is not a ListenNotes url I recognise. :(", "Error"
    end switch
 end index
+
+private function _ListenNotes droppedURL
+   put listenNotes_FetchEpisodeID (droppedURL) into episodeID
+   put pageArray_ConstructEpisode (episodeID) into pageArray
+   return pageArray
+end _ListenNotes
 
 command scrape_SetUserAgent
    -- HTTP_USER_AGENT Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0
@@ -57,12 +67,12 @@ on test
    
    put listenNotes_FetchEpisodeID (droppedURL) into episodeID
    
-   -- put listenNotes_PageArrayFromScrape (sURL) into pageArray
+   -- put _ListenNotes (sURL) into pageArray
    put "0c60625d4dd942b2abb2ce3d26f690c0" into episodeID
    -- put "7.25- The Parliament of Professors" into searchTerm
    -- put listenNotes_EpisodeSearchPageArray (searchTerm) into pageArray
    
-   put listenNotes_ConstructEpisodePageArray (episodeID) into pageArray
+   put pageArray_ConstructEpisode (episodeID) into pageArray
    transport_ReturnPageArray pageArray
    */
 end test
@@ -124,10 +134,32 @@ on importEpisode
       transport_ExitAndReturnError errorText, "Not a ListenNotes Episode"
    end if
    
-   put listenNotes_ConstructEpisodePageArray (episodeID) into pageArray
+   put pageArray_ConstructEpisode (episodeID) into pageArray
    transport_ReturnPageArray pageArray
 end importEpisode
 
+getprop findPodcast_Array [pJson]
+   put transport_GetDroppedArray() into pArray
+   -- put json_ToArray (pJson) into pArray
+   put pArray ["search_Term"] into searchTerm
+   --   
+   put _FindPodcast (searchTerm) into pageArray
+   return pageArray
+end findPodCast_Array
+
+getprop importPodcast_Array
+   put transport_GetDroppedArray() into pArray
+   put pArray ["podcastID"] into podcastID
+   --
+   if podcastID is empty then
+      put merge ("This transporter cannot be used for this operation!") into errorText
+      return errorText
+   else
+      put pageArray_FetchPodcast (podcastID) into pageArray
+      return pageArray
+   end if
+end importPodcast_Array
+   
 on importPodcast
    -- the first after a search
    -- Used by wiki-button displayed on generated "Found Podcast" page
@@ -141,7 +173,7 @@ on importPodcast
       transport_ExitAndReturnError errorText, "Not a Fedwiki URL"
    end if
    --
-   put listenNotes_FetchPodcastPageArray (podcastID) into pageArray
+   put pageArray_FetchPodcast (podcastID) into pageArray
    transport_ReturnPageArray pageArray
 end importPodcast
 
@@ -167,10 +199,20 @@ on findPodcast
    put transport_GetDroppedArray() into postedArray
    put postedArray ["search_Term"] into searchTerm
    -- put "Economist" into searchTerm
+   
+   put _FindPodcast (searchTerm) into pageArray
    --
+   if pageArray is an array then
+      transport_ReturnPageArray pageArray
+   else
+      transport_ExitAndReturnError errorText, "Not a Fedwiki URL"
+   end if
+end findPodcast
+
+private function _FindPodcast searchTerm
    if searchTerm is empty then
       put merge ("This transporter cannot be used for this operation!") into errorText
-      transport_ExitAndReturnError errorText, "Not a Fedwiki URL"
+      return errorText
    end if
    --
    put "Here is a list of some podcasts I found with these search terms..." into someMarkdown
@@ -187,6 +229,5 @@ on findPodcast
       put podcast_ConstructButton (podcastTitle, podcastID, false) into btnHTML
       pageArray_AddHtml pageArray, btnHTML
    end repeat
-   --
-   transport_ReturnPageArray pageArray
-end findPodcast
+   return pageArray
+end _FindPodcast
